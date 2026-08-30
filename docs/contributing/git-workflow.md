@@ -63,27 +63,21 @@ Dùng **direct-branch, không fork**: job CI `ai-review`/`ai-eval` cần biến 
 (`ANTHROPIC_API_KEY`, `GITLAB_REVIEW_TOKEN`) mà fork thường không kế thừa; team sản phẩm là nội
 bộ AntAdmin nên rủi ro thấp hơn mô hình fork công khai.
 
-## 5. CI/CD variables
+## 5. Thiết lập release trên GitHub/npmjs.com
 
-Settings → CI/CD → Variables:
-
-| Biến | Giá trị | Ghi chú |
-|---|---|---|
-| `NPM_TOKEN` | token registry @antadmin | **Masked**, **Protected** (chỉ nhánh/tag protected) |
-
-`.gitlab-ci.yml` (root) đã ghi token vào `.npmrc` trong `before_script` và chạy:
-- `quality` (mọi nhánh): lint → typecheck → build.
-- `release` (chỉ `main`): `changeset publish`.
+- Trong npmjs.com, cấu hình trusted publisher cho từng package với owner `daothanh`, repository
+  `antadmin` và workflow `release.yml`.
+- Trong GitHub Actions settings, cho phép workflow tạo/cập nhật pull request để Changesets quản lý
+  PR version.
+- Không tạo `NPM_TOKEN` hoặc `NODE_AUTH_TOKEN`; job publish xác thực bằng OIDC.
+- `.gitlab-ci.yml` tiếp tục chạy quality, AI review/eval và deploy Pages, không publish package.
 
 ## 6. Quy trình release
 
 ```bash
-# 1) Trên main đã gom đủ changeset → bump version + changelog:
-git switch -c chore/version-packages
-pnpm changeset version       # cập nhật version (lockstep) + CHANGELOG
-git commit -am "chore: version packages"
-git push -u origin chore/version-packages
-# 2) Merge MR này vào main → CI job `release` tự `changeset publish`.
+# 1) Merge thay đổi kèm changeset vào main.
+# 2) GitHub Actions mở/cập nhật PR version (bump lockstep + changelog).
+# 3) Merge PR version vào main; workflow build, pack và publish qua npm OIDC.
 ```
 
 Tag nên gắn theo version (Changesets/CI có thể tạo `@antadmin/...@x.y.z`). Channel `beta`/`next`:
@@ -118,11 +112,13 @@ file trong repo:
    `CODEOWNERS` (root repo) không chặn gì cả, chỉ mang tính tham khảo.
 4. **Members**: cấp Developer (project `framework-core`) + Reporter (group `antadmin`) cho từng dev
    team sản phẩm tham gia đóng góp.
-5. **CI/CD Variables**: xác nhận `NPM_TOKEN`, `ANTHROPIC_API_KEY`, `GITLAB_REVIEW_TOKEN` đã
-   Masked + Protected đúng scope (mục 5).
+5. **CI/CD Variables**: xác nhận `ANTHROPIC_API_KEY`, `GITLAB_REVIEW_TOKEN` đã Masked + Protected
+   đúng scope.
 6. **Tạo GitLab group thật** khớp tên dùng trong `CODEOWNERS` (thay các placeholder
    `@team-ui-owners`, `@team-composables-owners`, `@team-theme-owners`, `@team-platform-owners`,
    `@team-ai-owners`, `@core-team`) — làm **trước** mục 3.
 7. **Tạo labels**: `rfc`, `contribution::t1-fix`, `contribution::t2-feature`,
    `contribution::t3-breaking`, `status::needs-rfc`, `status::good-first-contribution`,
    `status::declined`, `needs-beta-validation`, `feature-request`.
+8. **Release npmjs.com**: cấu hình trusted publisher cho cả 10 package và cho phép GitHub Actions
+   tạo/cập nhật pull request (mục 5).
