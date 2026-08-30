@@ -1,7 +1,7 @@
 # AntAdmin Framework Core
 
 Framework FE nội bộ (Nuxt 4 + Ant Design Vue) cho mô hình tập đoàn: 1 team core, nhiều team sản phẩm.
-Core team sở hữu monorepo này và publish các package `@antadmin/*` lên private registry; team sản phẩm
+Core team sở hữu monorepo này và publish công khai các package `@antadmin/*` lên npmjs.com; team sản phẩm
 consume qua semver và `extends` Nuxt layer.
 
 ## Yêu cầu
@@ -31,28 +31,20 @@ docs/              # VitePress → https://web.docs.vtii.vn  (Storybook: /storyb
 
 ## Cài đặt cho team sản phẩm
 
-Package `@antadmin/*` nằm trong GitLab Package Registry ở **cấp group `antadmin`**. Để `pnpm install`
-được, project consumer cần:
+Package `@antadmin/*` được publish public trên npmjs.com. Consumer cài trực tiếp bằng pnpm, không cần
+registry riêng hoặc token đọc:
 
-1. `.npmrc` (commit vào repo consumer) trỏ scope về group endpoint:
-   ```
-   @antadmin:registry=https://github.com/api/v4/groups/antadmin/-/packages/npm/
-   //github.com/api/v4/groups/antadmin/-/packages/npm/:_authToken=${NPM_TOKEN}
-   ```
-2. Biến môi trường `NPM_TOKEN` (KHÔNG commit) = **Group Deploy Token** hoặc **Group Access Token**
-   của group `antadmin`, scope tối thiểu `read_package_registry`. Đặt trong CI/CD variables, hoặc trong
-   `~/.npmrc` cá nhân trên máy dev.
-
-> **Lưu ý quyền:** đây là read-only token dùng chung ở cấp group, nên **không cần** add từng dev làm
-> member của project core. Nếu vẫn dùng Personal Access Token (`glpa…`) cá nhân thì user phải là member
-> của group/project `antadmin` (role ≥ Reporter), nếu không GitLab trả **404** (ẩn package vì thiếu quyền đọc).
+```bash
+pnpm add @antadmin/nuxt-layer-base
+```
 
 ## Scripts
 - `pnpm build` / `pnpm lint` / `pnpm typecheck` / `pnpm test` — chạy qua Turborepo
 - `pnpm test` — Vitest; các package `composables` / `ui` / `utils` bật **coverage gate** (`--coverage` + ngưỡng)
 - `pnpm --filter docs dev` — xem docs VitePress; `pnpm --filter @antadmin/ui storybook` — Storybook
 - `pnpm changeset` — tạo changeset cho release
-- `pnpm release` — build + publish (CI)
+- `pnpm test:release` — kiểm tra contract workflow release
+- Release ổn định chạy trên GitHub Actions bằng npm trusted publishing, không dùng npm token
 
 ## Trạng thái
 Nền monorepo + toàn bộ package cốt lõi đã hoàn thiện và publish (`1.3.x`): theme, ui, composables,
