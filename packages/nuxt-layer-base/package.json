@@ -1,6 +1,6 @@
 {
   "name": "@antadmin/nuxt-layer-base",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Nuxt layer nền của framework AntAdmin — entry point duy nhất team sản phẩm cần extends",
   "license": "UNLICENSED",
   "type": "module",

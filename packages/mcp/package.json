@@ -1,6 +1,6 @@
 {
   "name": "@antadmin/mcp",
-  "version": "0.0.0",
+  "version": "1.4.0",
   "description": "MCP server nội bộ AntAdmin — phơi tri thức framework (component C*, design token, docs, package) cho AI của team sản phẩm",
   "license": "UNLICENSED",
   "type": "module",

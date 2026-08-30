@@ -1,5 +1,11 @@
 # @antadmin/tsconfig
 
+## 1.4.0
+
+### Patch Changes
+
+- ae96b1a: Phát hành công khai toàn bộ package AntAdmin lên npmjs.com bằng trusted publishing của GitHub Actions.
+
 ## 1.3.0
 
 ## 1.2.1

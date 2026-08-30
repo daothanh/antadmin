@@ -1,5 +1,28 @@
 # @antadmin/cli
 
+## 1.4.0
+
+### Minor Changes
+
+- a28f45c: Scaffold thêm CI/CD deploy đầy đủ, dựa trên hạ tầng Docker + GitLab Runner shell
+  executor đã triển khai thực tế cho một sản phẩm AntAdmin: `Dockerfile` đa stage
+  (check/build/runtime), `docker-compose.yml`/`docker-compose.dev.yml`/
+  `docker-compose.prod.yml`, `scripts/deploy-prod.sh`, `.dockerignore`, và
+  `.gitlab-ci.yml` mới (stage check → build → deploy, tự deploy nhánh `dev` lên máy
+  dev, prod deploy thủ công qua script). Thêm script `check` (lint+typecheck) vào
+  `package.json` scaffold. Docs: mục mới [CI/CD & Deploy](/guide/deploy).
+- a28f45c: Scaffold thêm sẵn `CLAUDE.md` cho project mới: context chuẩn cho AI coding assistant
+  (quy ước C*/useApi/definePageMeta, gotchas CSR/theme/cookie/registry) — project tạo từ
+  `create-antadmin-app` dùng được Claude Code/Cursor đúng chuẩn framework ngay từ đầu.
+- a28f45c: Scaffold thêm cấu hình AI tooling: `.mcp.json` (GitLab self-host + Figma) và
+  `.claude/settings.json` guardrail (deny đọc `.env`/`~/.npmrc`, deny force-push,
+  allow sẵn các lệnh lint/typecheck/build/git read-only).
+
+### Patch Changes
+
+- a28f45c: Thêm package @antadmin/mcp — MCP server nội bộ phơi tri thức framework (component C*, design token, docs, package registry) cho AI của team sản phẩm qua 5 tool (list_components, get_component, list_tokens, search_docs, list_packages). Tri thức sinh lúc build vào data/*.json nên server chạy standalone trong repo sản phẩm. Scaffold @antadmin/cli thêm sẵn server "antadmin" vào .mcp.json.
+- ae96b1a: Phát hành công khai toàn bộ package AntAdmin lên npmjs.com bằng trusted publishing của GitHub Actions.
+
 ## 1.3.0
 
 ### Patch Changes

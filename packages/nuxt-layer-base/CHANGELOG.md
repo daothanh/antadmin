@@ -1,5 +1,20 @@
 # @antadmin/nuxt-layer-base
 
+## 1.4.0
+
+### Patch Changes
+
+- a28f45c: Bổ sung `CFilterBar` vào khai báo `GlobalComponents` trong `antadmin.d.ts` — component đã được đăng ký global qua `@antadmin/ui` nhưng thiếu type, khiến template dùng `<CFilterBar>` không có gợi ý type/IntelliSense.
+- ae96b1a: Phát hành công khai toàn bộ package AntAdmin lên npmjs.com bằng trusted publishing của GitHub Actions.
+- a28f45c: Thêm component chat AI: CChat (panel controlled — list auto-scroll + ô soạn, Enter gửi/Shift+Enter xuống dòng, chặn gửi giữa lúc gõ IME) và CChatMessage (bong bóng message + typing indicator). Thuần trình bày, wire với useAiChat của @antadmin/ai qua props/emit.
+- Updated dependencies [a28f45c]
+- Updated dependencies [ae96b1a]
+- Updated dependencies [a28f45c]
+  - @antadmin/ui@1.4.0
+  - @antadmin/composables@1.4.0
+  - @antadmin/theme@1.4.0
+  - @antadmin/utils@1.4.0
+
 ## 1.3.0
 
 ### Minor Changes

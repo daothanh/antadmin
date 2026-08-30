@@ -1,5 +1,19 @@
 # @antadmin/ui
 
+## 1.4.0
+
+### Minor Changes
+
+- a28f45c: Thêm component chat AI: CChat (panel controlled — list auto-scroll + ô soạn, Enter gửi/Shift+Enter xuống dòng, chặn gửi giữa lúc gõ IME) và CChatMessage (bong bóng message + typing indicator). Thuần trình bày, wire với useAiChat của @antadmin/ai qua props/emit.
+
+### Patch Changes
+
+- a28f45c: Sửa lỗi TS7022 (`'name' implicitly has type 'any'`) ở bước vite:dts khi build, do vòng suy luận type của vue-tsc với `v-for="(_, name) in $slots"` trong CForm/CTable. Chuyển sang lặp `useSlots()` với type tường minh; hành vi forward slot (kể cả slotProps) giữ nguyên, có test kèm theo.
+- ae96b1a: Phát hành công khai toàn bộ package AntAdmin lên npmjs.com bằng trusted publishing của GitHub Actions.
+- Updated dependencies [ae96b1a]
+  - @antadmin/theme@1.4.0
+  - @antadmin/utils@1.4.0
+
 ## 1.3.0
 
 ### Minor Changes

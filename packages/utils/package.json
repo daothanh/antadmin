@@ -1,6 +1,6 @@
 {
   "name": "@antadmin/utils",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Helper TypeScript thuần (không phụ thuộc Nuxt) cho framework AntAdmin",
   "license": "UNLICENSED",
   "type": "module",
