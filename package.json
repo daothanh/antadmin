@@ -1,0 +1,31 @@
+{
+  "name": "@antadmin/framework-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework FE nội bộ AntAdmin (Nuxt 4 + Ant Design Vue) — monorepo core",
+  "packageManager": "pnpm@11.7.0+sha512.19cc852c120c7125760f2443ee6be0ca5b40f9f50598de1a09a1f177503e010e57c23c77646e01e761de59bf874fb22a3398c33ab9691fc13eb946b6f0f4d620",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=11"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "dev": "turbo run dev",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.28.1",
+    "@antadmin/eslint-config": "workspace:*",
+    "@antadmin/tsconfig": "workspace:*",
+    "eslint": "^9.18.0",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.3"
+  }
+}

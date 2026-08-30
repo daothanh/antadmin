@@ -1,0 +1,4 @@
+{
+  "extends": "@antadmin/tsconfig/base",
+  "include": ["src", "build.config.ts"]
+}

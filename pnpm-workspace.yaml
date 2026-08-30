@@ -1,0 +1,12 @@
+packages:
+  - "packages/*"
+  - "playground"
+  - "docs"
+allowBuilds:
+  '@parcel/watcher': true
+  core-js: false
+  esbuild: true
+# Cho phép chạy build script (postinstall) của các dep tin cậy.
+onlyBuiltDependencies:
+  - esbuild
+  - "@parcel/watcher"

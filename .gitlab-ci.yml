@@ -1,0 +1,141 @@
+# CI cho monorepo core AntAdmin.
+stages:
+  - quality
+  - release
+  - deploy
+
+default:
+  image: node:24
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+
+quality:
+  stage: quality
+  script:
+    - pnpm lint
+    - pnpm typecheck
+    - pnpm test
+    - pnpm build
+
+# AI review MR bằng Claude Code (headless). Chạy trong branch pipeline khi nhánh có MR
+# đang mở (CI_OPEN_MERGE_REQUESTS) — không tạo pipeline merge_request_event riêng.
+# KHÔNG chặn merge (allow_failure) — review là tham khảo, người duyệt vẫn quyết.
+# Cần biến CI/CD (Settings → CI/CD → Variables, masked):
+#   ANTHROPIC_API_KEY   — API key Anthropic
+#   GITLAB_REVIEW_TOKEN — Project Access Token scope `api` (role ≥ Reporter) để post comment MR
+# Thiếu biến nào job tự skip (điều kiện trong rules).
+ai-review:
+  stage: quality
+  needs: []
+  allow_failure: true
+  timeout: 15m
+  rules:
+    - if: $CI_COMMIT_BRANCH != "main" && $CI_OPEN_MERGE_REQUESTS && $ANTHROPIC_API_KEY && $GITLAB_REVIEW_TOKEN
+      when: on_success
+    - when: never
+  variables:
+    GIT_DEPTH: "0" # cần lịch sử đủ sâu để diff với nhánh đích
+  cache: []
+  before_script:
+    - npm install -g @anthropic-ai/claude-code
+  script:
+    # Ép https như job release (CI_API_V4_URL trên instance này là http).
+    - HOSTPATH="${CI_API_V4_URL#http*://}"
+    # CI_OPEN_MERGE_REQUESTS dạng "group/project!iid,..." — lấy IID của MR đầu tiên.
+    - MR_REF="${CI_OPEN_MERGE_REQUESTS%%,*}"
+    - MR_IID="${MR_REF##*!}"
+    # Lấy chi tiết MR 1 lần (nhánh đích để diff đúng base + description cho checklist mục 5
+    # trong ci-review-prompt.md) — tránh gọi API 2 lần.
+    - |
+      curl -sf --header "PRIVATE-TOKEN: ${GITLAB_REVIEW_TOKEN}" \
+        "https://${HOSTPATH}/projects/${CI_PROJECT_ID}/merge_requests/${MR_IID}" > mr.json
+      TARGET_BRANCH=$(node -e "console.log(JSON.parse(require('fs').readFileSync('mr.json','utf8')).target_branch)")
+      node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('mr.json','utf8')).description || '(MR không có mô tả)')" > mr-description.md
+    - git fetch origin "${TARGET_BRANCH}"
+    # Diff từ merge-base; chặn 200KB để bound chi phí (diff lớn hơn sẽ bị cắt, có ghi chú).
+    - git diff "origin/${TARGET_BRANCH}...HEAD" > full.diff
+    - head -c 200000 full.diff > mr.diff
+    - if [ "$(wc -c < full.diff)" -gt 200000 ]; then printf '\n\n[... diff bị cắt ở 200KB ...]\n' >> mr.diff; fi
+    # Chạy review: chỉ tool read-only, model sonnet cho rẻ, CLAUDE.md tự nạp làm context.
+    - claude -p "$(cat .claude/ci-review-prompt.md)" --model claude-sonnet-5 --allowedTools "Read,Grep,Glob" --max-turns 30 > review.md
+    - printf '## 🤖 AI Review (tham khảo — không chặn merge)\n\n' > comment.md
+    - cat review.md >> comment.md
+    - |
+      curl -sf --request POST --header "PRIVATE-TOKEN: ${GITLAB_REVIEW_TOKEN}" \
+        --data-urlencode "body@comment.md" \
+        "https://${HOSTPATH}/projects/${CI_PROJECT_ID}/merge_requests/${MR_IID}/notes"
+
+# Eval prompt library qua AI gateway thật (packages/ai/evals). Chạy khi MR đụng
+# packages/ai/** và trên main; assertion tất định (không LLM chấm LLM) nên rẻ + ổn định.
+# KHÔNG chặn merge (allow_failure) — gateway sập không nên khoá MR.
+# Cần biến CI/CD: AI_GATEWAY_URL, AI_GATEWAY_KEY (masked); AI_EVAL_MODEL (tuỳ chọn).
+# Thiếu biến → job không tạo (rules), script cũng tự exit 0 nếu lọt.
+ai-eval:
+  stage: quality
+  needs: []
+  allow_failure: true
+  timeout: 10m
+  rules:
+    - if: $AI_GATEWAY_URL == null || $AI_GATEWAY_KEY == null
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      changes:
+        - packages/ai/**/*
+      when: on_success
+    - when: never
+  script:
+    - pnpm --filter @antadmin/ai eval
+
+# Publish package lên GitLab Package Registry của CHÍNH project.
+# Cần biến CI/CD `NPM_TOKEN` = access token (Project/Group) scope write_package_registry
+# (CI_JOB_TOKEN bị 401 trên instance này khi publish npm).
+release:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success
+    - when: never
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir .pnpm-store
+    # Ghi đè @antadmin:registry + authToken trỏ registry project hiện tại.
+    # Cắt mọi protocol rồi ép https (CI_API_V4_URL trên instance này là http).
+    - |
+      HOSTPATH="${CI_API_V4_URL#http*://}"
+      echo "@antadmin:registry=https://${HOSTPATH}/projects/${CI_PROJECT_ID}/packages/npm/" >> .npmrc
+      echo "//${HOSTPATH}/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=${NPM_TOKEN}" >> .npmrc
+    - pnpm install --frozen-lockfile
+  script:
+    # Chỉ build các package publish (layer prepare + libs); bỏ playground/docs.
+    - pnpm exec turbo run build --filter="./packages/*"
+    - pnpm changeset publish
+
+# Publish docs (VitePress) + Storybook lên 1 project Cloudflare Pages.
+# Docs phục vụ ở "/", Storybook nhét vào "/storybook".
+# Cần biến CI/CD: CLOUDFLARE_API_TOKEN (scope Cloudflare Pages: Edit) + CLOUDFLARE_ACCOUNT_ID.
+# wrangler tự đọc 2 biến này từ env.
+deploy:pages:
+  stage: deploy
+  needs:
+    - quality
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_success
+    - when: never
+  script:
+    # Build @antadmin/theme + @antadmin/ui trước (Storybook resolve theme qua dist).
+    - pnpm --filter "@antadmin/ui..." build
+    - pnpm --filter @antadmin/ui build-storybook          # -> packages/ui/storybook-static
+    - pnpm --filter docs build                         # -> docs/.vitepress/dist
+    - cp -R packages/ui/storybook-static docs/.vitepress/dist/storybook
+    - pnpm dlx wrangler@3 pages deploy docs/.vitepress/dist --project-name=antadmin-web-framework --branch=main

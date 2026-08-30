@@ -1,0 +1,18 @@
+# Chạy thử image production trên máy local: docker compose up --build
+# (cần .env chứa NUXT_SESSION_SECRET, ... — xem .env.example)
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: __APP_NAME__
+    container_name: __APP_NAME__
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000

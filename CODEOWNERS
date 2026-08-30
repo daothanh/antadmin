@@ -1,0 +1,47 @@
+# CODEOWNERS — AntAdmin Framework Core
+#
+# ⚠️ Owner dưới đây là PLACEHOLDER. Trước khi bật "Merge request approvals →
+# Code Owner approval" trên GitLab (xem checklist thủ công trong
+# docs/contributing/git-workflow.md), phải tạo group/username thật trên GitLab
+# và thay các @team-* / @core-team bên dưới — nếu không, GitLab sẽ báo lỗi
+# "owner không tồn tại" hoặc rule không có hiệu lực.
+#
+# Cú pháp: path cuối cùng khớp thắng — path càng cụ thể càng nên đặt sau.
+
+# Fallback mặc định — core team lead duyệt mọi thứ không khớp rule bên dưới.
+* @core-team
+
+[UI]
+packages/ui/**                    @team-ui-owners
+docs/guide/ui.md                  @team-ui-owners
+
+[Composables & Utils]
+packages/composables/**           @team-composables-owners
+packages/utils/**                 @team-composables-owners
+docs/guide/composables.md         @team-composables-owners
+
+[Theme]
+packages/theme/**                 @team-theme-owners
+docs/guide/theming.md             @team-theme-owners
+
+[Nuxt Layer / BFF / Auth / CLI]
+packages/nuxt-layer-base/**       @team-platform-owners
+packages/cli/**                   @team-platform-owners
+docs/guide/auth.md                @team-platform-owners
+
+[AI & MCP]
+packages/ai/**                    @team-ai-owners
+packages/mcp/**                   @team-ai-owners
+docs/guide/ai.md                  @team-ai-owners
+docs/guide/ai-tooling.md          @team-ai-owners
+
+# Thay đổi nhạy cảm — luôn cần core team duyệt, kể cả khi đi kèm 1 MR feature
+# bình thường (chống "âm thầm đổi luật chơi").
+[Kiến trúc & quy trình]
+docs/guide/architecture.md        @core-team
+docs/contributing/**              @core-team
+CLAUDE.md                         @core-team
+CONTRIBUTING.md                   @core-team
+.gitlab-ci.yml                    @core-team
+CODEOWNERS                        @core-team
+.gitlab/**                        @core-team

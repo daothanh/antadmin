@@ -1,0 +1,19 @@
+# Dùng bởi job deploy:dev trong .gitlab-ci.yml — không chạy tay trừ khi debug tại
+# chỗ trên máy dev. Đổi cổng "3001:3000" nếu máy dev đã có app khác chiếm cổng.
+services:
+  web:
+    # Image kéo từ registry nội bộ; tag do CI truyền vào qua WEB_IMAGE.
+    image: ${WEB_IMAGE:-registry.antadmin.com/antadmin/__APP_NAME__:dev}
+    container_name: __APP_NAME__-dev
+    restart: unless-stopped
+    ports:
+      - '3001:3000'
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      # Bắt buộc ở production (khoá ký cookie session) — đặt trong CI/CD Variables.
+      NUXT_SESSION_SECRET: ${NUXT_SESSION_SECRET:?Thiếu NUXT_SESSION_SECRET (đặt trong GitLab CI/CD Variables)}
+      # IAM/gateway dev; override được bằng biến CI/CD NUXT_AUTH_BASE_URL.
+      NUXT_AUTH_BASE_URL: ${NUXT_AUTH_BASE_URL:-https://api.antadmin.com/cop}
+      NUXT_API_PROXY_TARGET: ${NUXT_API_PROXY_TARGET:-https://api.antadmin.com/cop}

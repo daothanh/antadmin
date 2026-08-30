@@ -1,0 +1,28 @@
+{
+  "name": "__APP_NAME__",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxi dev",
+    "build": "nuxi build",
+    "preview": "node .output/server/index.mjs",
+    "typecheck": "nuxi prepare && vue-tsc --noEmit",
+    "lint": "eslint .",
+    "check": "pnpm lint && pnpm typecheck"
+  },
+  "dependencies": {
+    "@tabler/icons-vue": "^3.41.1",
+    "@antadmin/nuxt-layer-base": "__TASCO_VERSION__",
+    "@antadmin/ui": "__TASCO_VERSION__"
+  },
+  "devDependencies": {
+    "@antadmin/eslint-config": "__TASCO_VERSION__",
+    "@antadmin/tsconfig": "__TASCO_VERSION__",
+    "eslint": "^9.18.0",
+    "nuxt": "^4.0.0",
+    "typescript": "^5.7.3",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.2.0"
+  }
+}

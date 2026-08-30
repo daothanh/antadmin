@@ -1,0 +1,238 @@
+/* Base global stylesheet của framework AntAdmin.
+ * Inject MỘT LẦN ở layer (nuxt.config `css: ['@antadmin/theme/base.css']`).
+ * Chỉ chứa tinh chỉnh global nhẹ — màu sắc lấy từ biến `--antadmin-*` (do layer
+ * sinh từ cssVarsText). Phần lớn giao diện do antd theme token lo; file này
+ * xử lý những thứ antd không cấu hình được (scrollbar, font nền, selection...).
+ * KHÔNG phụ thuộc Tailwind. */
+
+:root {
+  color-scheme: light;
+  /* Khai báo font TĨNH ở đây (không chỉ inject runtime) để @nuxt/fonts quét được
+   * tên 'Quicksand'/'Montserrat' khi build và tự tải, self-host. cssVarsText cũng
+   * set 2 biến này nhưng cùng giá trị — ở đây là "neo" cho việc dò font.
+   * Đồng bộ với @antadmin/theme tokens (fontStack/fontHeadingStack). */
+  --antadmin-font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --antadmin-font-family-heading: 'Montserrat', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Dark mode: useThemeMode gắn [data-theme='dark'] lên <html>; biến --antadmin-* đã
+ * được cssVarsText('dark') ghi đè, ở đây chỉ cần đổi color-scheme cho form
+ * control/scrollbar gốc của trình duyệt. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  font-family: var(--antadmin-font-family);
+  font-size: var(--antadmin-font-size);
+  color: var(--antadmin-color-text);
+  background: var(--antadmin-color-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--antadmin-color-link);
+}
+
+::selection {
+  background: var(--antadmin-color-primary-soft);
+  color: var(--antadmin-color-primary-active);
+}
+
+/* Scrollbar mảnh, đồng nhất giữa các trang. */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(16, 33, 63, 0.18);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 33, 63, 0.32);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Bảng (Table) — dấu ấn AntAdmin: header nền primary, chữ trắng.
+ * Style qua global CSS vì ant-design-vue 4.x bỏ qua theme.components.
+ * ───────────────────────────────────────────────────────────────────────── */
+.ant-table-wrapper .ant-table-thead > tr > th,
+.ant-table-wrapper .ant-table-thead > tr > td {
+  background: var(--antadmin-color-primary) !important;
+  color: #fff !important;
+  font-weight: 400;
+  white-space: nowrap;
+  padding-block: var(--antadmin-table-cell-padding-block, 8px) !important;
+  padding-inline: var(--antadmin-table-cell-padding-inline, 8px) !important;
+}
+/* Bỏ vạch ngăn dọc mặc định giữa các cột header (cho liền mạch). */
+.ant-table-wrapper .ant-table-thead > tr > th::before {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+}
+/* Icon sort/filter trên header chuyển sáng để hợp nền tối. */
+.ant-table-wrapper .ant-table-thead .ant-table-column-sorter,
+.ant-table-wrapper .ant-table-thead .ant-table-filter-trigger {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+.ant-table-wrapper .ant-table-thead th.ant-table-column-has-sorters:hover,
+.ant-table-wrapper .ant-table-thead th.ant-table-column-sort {
+  background: var(--antadmin-color-primary-active) !important;
+}
+/* Hàng được chọn dùng nền info-soft thay vì xám mặc định. */
+.ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td {
+  background: var(--antadmin-color-info-soft) !important;
+}
+/* Ô gọn hơn cho mật độ dữ liệu cao. */
+.ant-table-wrapper .ant-table-tbody > tr > td {
+  padding-block: var(--antadmin-table-cell-padding-block, 8px) !important;
+  padding-inline: var(--antadmin-table-cell-padding-inline, 8px) !important;
+}
+
+/* Tab đang chọn in đậm cho dễ nhận biết. */
+.ant-tabs-tab-active .ant-tabs-tab-btn {
+  font-weight: 700;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * MẬT ĐỘ COMPONENT (padding / margin) — chỉnh tập trung qua density tokens
+ * (@antadmin/theme → biến --antadmin-*). Dùng global CSS vì ant-design-vue 4.x bỏ
+ * qua theme.components. Height của control đã set qua global token controlHeight*.
+ * ───────────────────────────────────────────────────────────────────────── */
+/* Card — padding thân. */
+.ant-card > .ant-card-body {
+  padding: var(--antadmin-card-padding-block, 12px) var(--antadmin-card-padding-inline, 16px);
+}
+/* Card — padding header (theo trục ngang của body, cao gọn). */
+.ant-card > .ant-card-head {
+  padding-inline: var(--antadmin-card-padding-inline, 16px) !important;
+  min-height: var(--antadmin-card-heading-height, 56px) !important;
+}
+.c-card--collapse .ant-collapse .ant-collapse-header {
+  border-bottom: 1px solid var(--antadmin-color-border);
+  padding: 0 var(--antadmin-card-padding-inline, 16px) !important;
+  height: var(--antadmin-card-heading-height, 56px) !important;
+  align-items: center;
+}
+.c-card-primary > .ant-card-head, .c-card-primary .ant-collapse-header {
+  background: var(--antadmin-color-primary);
+  color: #ffffff !important;
+}
+.c-card-primary .c-card__title {
+  color: #ffffff !important;
+}
+/* Type: outline — header gạch dưới primary, không nền; tiêu đề primary. */
+.c-card-outline > .ant-card-head,
+.c-card-outline .ant-collapse-header {
+  border-bottom: 2px solid var(--antadmin-color-primary) !important;
+}
+.c-card-outline .c-card__title {
+  color: var(--antadmin-color-primary);
+}
+/* Type: filled — header nền dịu. */
+.c-card-filled > .ant-card-head,
+.c-card-filled .ant-collapse-header {
+  background: var(--antadmin-color-surface-muted) !important;
+}
+/* Type: ghost — nền trong suốt. */
+.c-card-ghost {
+  background: transparent !important;
+}
+
+  /* Form item — khoảng cách dưới. */
+.ant-form-item {
+  margin-bottom: var(--antadmin-form-item-margin, 16px) !important;
+}
+/* Modal / Drawer — padding thân. */
+.ant-modal .ant-modal-body,
+.ant-drawer .ant-drawer-body {
+  padding: var(--antadmin-modal-body-padding, 16px) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Sidebar nav (CSideNav) — SAO Y override OneAuto (#left-side-menu trong
+ * main.css): menu trong suốt (sider lo gradient), chữ + icon trắng UPPERCASE,
+ * item con thụt 35px bo tròn pill, hover/selected nền cam #ff9800.
+ * ───────────────────────────────────────────────────────────────────────── */
+.c-sidenav.ant-menu-dark,
+.c-sidenav.ant-menu-dark .ant-menu-sub {
+  background: transparent !important;
+}
+.c-sidenav .ant-menu-title-content {
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.c-sidenav .ant-menu-title-content,
+.c-sidenav .tabler-icon,
+.c-sidenav .ant-menu-item .anticon {
+  color: #fff !important;
+}
+.c-sidenav > .ant-menu-item {
+  padding: 0 1rem !important;
+}
+.c-sidenav > .ant-menu-submenu > .ant-menu-submenu-title {
+  padding-left: 16px !important;
+}
+/* Item con: thụt vào + bo tròn pill. */
+.c-sidenav .ant-menu-sub .ant-menu-item {
+  margin-left: 35px !important;
+  padding-left: 15px !important;
+  border-radius: 9999px !important;
+}
+/* Hover & active đều nền cam, chữ trắng. */
+.c-sidenav .ant-menu-item:hover,
+.c-sidenav .ant-menu-item-selected {
+  background-color: var(--antadmin-color-accent) !important;
+  color: #fff !important;
+}
+/* Khi thu gọn: submenu cha đang chọn nền cam. */
+.c-sidenav.ant-menu-inline-collapsed .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  background-color: var(--antadmin-color-accent) !important;
+  color: #fff !important;
+}
+
+/* Top nav (CTopNav) — menu module ngang: UPPERCASE bold navy #253264, active
+ * đổi sang primary + gạch chân kiểu tab ở đáy header (giống #top-header-menu). */
+.c-topnav.ant-menu-horizontal {
+  height: 100%;
+  line-height: normal;
+  color: #253264;
+  border-bottom: none;
+}
+.c-topnav .ant-menu-title-content {
+  text-transform: uppercase;
+  font-weight: 700;
+}
+/* Item cao trọn header → ink-bar (::after, bottom:0) nằm sát đáy header. */
+.c-topnav.ant-menu-horizontal > .ant-menu-item,
+.c-topnav.ant-menu-horizontal > .ant-menu-submenu {
+  height: 100% !important;
+  top: 0 !important;
+  margin-block: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  color: #253264;
+}
+/* Gạch chân: dày 2px, sát đáy header, ôm theo bề rộng item (trừ padding). */
+.c-topnav.ant-menu-horizontal > .ant-menu-item::after,
+.c-topnav.ant-menu-horizontal > .ant-menu-submenu::after {
+  inset-inline: 16px !important;
+  bottom: 0 !important;
+  border-bottom-width: 2px !important;
+}
+.c-topnav.ant-menu-horizontal > .ant-menu-item-selected,
+.c-topnav.ant-menu-horizontal > .ant-menu-submenu-selected {
+  color: var(--antadmin-color-primary) !important;
+}
+.c-topnav.ant-menu-horizontal > .ant-menu-item-selected::after,
+.c-topnav.ant-menu-horizontal > .ant-menu-item:hover::after,
+.c-topnav.ant-menu-horizontal > .ant-menu-submenu-selected::after,
+.c-topnav.ant-menu-horizontal > .ant-menu-submenu:hover::after {
+  border-bottom-color: var(--antadmin-color-primary) !important;
+}

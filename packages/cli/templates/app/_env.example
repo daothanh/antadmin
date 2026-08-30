@@ -1,0 +1,25 @@
+# Khoá mã hoá/ký cookie session (AES-256-GCM) — BẮT BUỘC ở production.
+# Tạo khoá: openssl rand -base64 32
+NUXT_SESSION_SECRET=
+
+# ĐĂNG NHẬP BẰNG FORM (first-party) — IAM + gateway.
+# baseURL bọc cả /iam và /auth; endpoint mặc định đã khớp IAM AntAdmin.
+NUXT_AUTH_BASE_URL=https://api.antadmin.com/cop
+# NUXT_AUTH_ENDPOINTS_LOGIN=/auth/auth/login-v1
+# NUXT_AUTH_ENDPOINTS_USER_INFO=/iam/user/userInfo
+# NUXT_AUTH_ENDPOINTS_CLIENTS=/iam/client/findAll?status=1
+# NUXT_AUTH_ENDPOINTS_OTP_SEND=/auth/auth/login/request
+NUXT_API_PROXY_TARGET=
+
+# Map field response nếu backend khác cấu trúc (mặc định body.*)
+# NUXT_AUTH_MAPPING_TOKEN=body.tokenData.access_token
+# NUXT_AUTH_MAPPING_ROLES=body.roles
+# NUXT_AUTH_MAPPING_PERMISSIONS=body.permissions
+
+# Cấu hình form đăng nhập (client đọc được)
+NUXT_PUBLIC_AUTH_METHODS=google,telegram
+NUXT_PUBLIC_AUTH_SHOW_CLIENT_SELECT=true
+# NUXT_PUBLIC_AUTH_DEFAULT_CLIENT_CODE=
+
+# Dev không có IAM: bỏ qua đăng nhập thật
+# NUXT_AUTH_MOCK=true

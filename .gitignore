@@ -1,0 +1,25 @@
+node_modules
+dist
+.output
+.nuxt
+.turbo
+.data
+coverage
+storybook-static
+.vitepress/cache
+*.log
+*.tsbuildinfo
+
+# env
+.env
+.env.*
+!.env.example
+
+# editor / os
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# claude local
+.claude/settings.local.json

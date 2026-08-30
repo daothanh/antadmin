@@ -1,0 +1,17 @@
+# Dùng bởi scripts/deploy-prod.sh trên máy prod (không chạy qua CI — xem script).
+services:
+  web:
+    # Image kéo từ registry nội bộ; tag do scripts/deploy-prod.sh truyền qua WEB_IMAGE.
+    image: ${WEB_IMAGE:-registry.antadmin.com/antadmin/__APP_NAME__:main}
+    container_name: __APP_NAME__
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    # Env prod (NUXT_SESSION_SECRET, NUXT_AUTH_BASE_URL, ...) đặt trong file .env
+    # cạnh compose trên máy prod — xem .env.example.
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000

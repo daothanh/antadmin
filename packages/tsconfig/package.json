@@ -1,0 +1,22 @@
+{
+  "name": "@antadmin/tsconfig",
+  "version": "1.3.0",
+  "description": "Cấu hình TypeScript dùng chung cho framework AntAdmin",
+  "license": "UNLICENSED",
+  "files": [
+    "base.json",
+    "nuxt.json",
+    "vue-lib.json"
+  ],
+  "exports": {
+    "./base": "./base.json",
+    "./nuxt": "./nuxt.json",
+    "./vue-lib": "./vue-lib.json",
+    "./base.json": "./base.json",
+    "./nuxt.json": "./nuxt.json",
+    "./vue-lib.json": "./vue-lib.json"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}
