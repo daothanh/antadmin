@@ -1,7 +1,6 @@
 # CI cho monorepo core AntAdmin.
 stages:
   - quality
-  - release
   - deploy
 
 default:
@@ -47,7 +46,7 @@ ai-review:
   before_script:
     - npm install -g @anthropic-ai/claude-code
   script:
-    # Ép https như job release (CI_API_V4_URL trên instance này là http).
+    # Ép https vì CI_API_V4_URL trên instance này là http.
     - HOSTPATH="${CI_API_V4_URL#http*://}"
     # CI_OPEN_MERGE_REQUESTS dạng "group/project!iid,..." — lấy IID của MR đầu tiên.
     - MR_REF="${CI_OPEN_MERGE_REQUESTS%%,*}"
@@ -95,30 +94,6 @@ ai-eval:
     - when: never
   script:
     - pnpm --filter @antadmin/ai eval
-
-# Publish package lên GitLab Package Registry của CHÍNH project.
-# Cần biến CI/CD `NPM_TOKEN` = access token (Project/Group) scope write_package_registry
-# (CI_JOB_TOKEN bị 401 trên instance này khi publish npm).
-release:
-  stage: release
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: on_success
-    - when: never
-  before_script:
-    - corepack enable
-    - pnpm config set store-dir .pnpm-store
-    # Ghi đè @antadmin:registry + authToken trỏ registry project hiện tại.
-    # Cắt mọi protocol rồi ép https (CI_API_V4_URL trên instance này là http).
-    - |
-      HOSTPATH="${CI_API_V4_URL#http*://}"
-      echo "@antadmin:registry=https://${HOSTPATH}/projects/${CI_PROJECT_ID}/packages/npm/" >> .npmrc
-      echo "//${HOSTPATH}/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=${NPM_TOKEN}" >> .npmrc
-    - pnpm install --frozen-lockfile
-  script:
-    # Chỉ build các package publish (layer prepare + libs); bỏ playground/docs.
-    - pnpm exec turbo run build --filter="./packages/*"
-    - pnpm changeset publish
 
 # Publish docs (VitePress) + Storybook lên 1 project Cloudflare Pages.
 # Docs phục vụ ở "/", Storybook nhét vào "/storybook".
