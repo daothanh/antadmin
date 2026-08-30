@@ -43,5 +43,6 @@ docs/contributing/**              @core-team
 CLAUDE.md                         @core-team
 CONTRIBUTING.md                   @core-team
 .gitlab-ci.yml                    @core-team
+.github/workflows/**              @core-team
 CODEOWNERS                        @core-team
 .gitlab/**                        @core-team
