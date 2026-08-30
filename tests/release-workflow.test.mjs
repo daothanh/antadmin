@@ -27,7 +27,7 @@ test('S-EDGE-01: tách mode version, publish và none', () => {
   assert.match(workflow, /mode\s*==\s*'publish'/)
   assert.match(workflow, /permissions:\s*\{\s*\}/)
   assert.equal([...workflow.matchAll(/runtime:\s*node@24/g)].length, 4)
-  assert.equal([...workflow.matchAll(/require-lockfile:\s*true/g)].length, 4)
+  assert.doesNotMatch(workflow, /require-lockfile:/)
   assert.doesNotMatch(workflow, /actions\/setup-node/)
 })
 

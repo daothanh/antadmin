@@ -23,7 +23,6 @@ jobs:
         with:
           runtime: node@24
           cache: false
-          require-lockfile: true
       - uses: changesets/action/select-mode@v2
         id: select-mode
 
@@ -42,7 +41,6 @@ jobs:
         with:
           runtime: node@24
           cache: false
-          require-lockfile: true
       - uses: changesets/action/version@v2
 
   pack:
@@ -61,7 +59,6 @@ jobs:
         with:
           runtime: node@24
           cache: false
-          require-lockfile: true
       - run: pnpm exec turbo run build --filter="./packages/*"
       - uses: changesets/action/pack@v2
         id: pack
@@ -82,7 +79,6 @@ jobs:
         with:
           runtime: node@24
           cache: false
-          require-lockfile: true
       - uses: changesets/action/publish@v2
         with:
           pack-dir-artifact-id: ${{ needs.pack.outputs.pack-dir-artifact-id }}
