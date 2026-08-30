@@ -45,7 +45,13 @@
     "unbuild": "^3.0.1",
     "vitest": "^3.0.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daothanh/antadmin.git",
+    "directory": "packages/mcp"
+  },
   "publishConfig": {
-    "access": "restricted"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   }
 }

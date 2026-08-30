@@ -61,7 +61,13 @@
     "vitest": "^3.0.0",
     "vue": "^3.5.13"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daothanh/antadmin.git",
+    "directory": "packages/ai"
+  },
   "publishConfig": {
-    "access": "restricted"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   }
 }

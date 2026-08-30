@@ -16,7 +16,13 @@
     "./nuxt.json": "./nuxt.json",
     "./vue-lib.json": "./vue-lib.json"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daothanh/antadmin.git",
+    "directory": "packages/tsconfig"
+  },
   "publishConfig": {
-    "access": "restricted"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   }
 }
