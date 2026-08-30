@@ -1,7 +1,7 @@
 # Release
 
 Dùng [Changesets](https://github.com/changesets/changesets). Các package `@antadmin/*` đi
-**lockstep** (`fixed`), publish lên private registry GitLab/Nexus (`access: restricted`).
+**lockstep** (`fixed`) và publish public lên npmjs.com (`access: public`).
 
 ## Quy trình hằng ngày
 
@@ -26,18 +26,18 @@ pnpm changeset version && pnpm -w build && pnpm changeset publish --tag beta
 pnpm changeset pre exit
 ```
 
-## Pipeline (CI)
+## Pipeline release
 
-`.gitlab-ci.yml` ở root:
+`.github/workflows/release.yml` chạy khi push vào `main` theo graph Changesets v3:
 
-- **quality** (mọi nhánh): `pnpm lint && pnpm typecheck && pnpm build`.
-- **release** (nhánh `main`): `pnpm build && pnpm changeset publish`.
+1. `select-mode` chọn `version`, `publish` hoặc không làm gì.
+2. Mode `version` mở/cập nhật PR bump version và changelog.
+3. Mode `publish` build package, tạo artifact đóng gói rồi job riêng publish lên npmjs.com.
 
-Bump version + changelog chạy bằng `pnpm changeset version` (commit vào `main` qua "version MR"
-hoặc bước thủ công trước khi release). CI publish các package có version mới hơn registry.
+Chỉ job `publish` có quyền OIDC `id-token: write`; workflow dùng npm trusted publishing và không
+lưu `NPM_TOKEN`/`NODE_AUTH_TOKEN`. GitLab CI vẫn giữ các job quality, AI và deploy Pages.
 
-Chi tiết cấu hình registry/token (instance vs project endpoint, các gotcha 401): xem
-[Cấu hình .npmrc](./npmrc).
+Chi tiết registry và thiết lập trusted publisher: xem [Cấu hình .npmrc](./npmrc).
 
 ## Breaking change
 
@@ -57,5 +57,5 @@ Chi tiết cấu hình registry/token (instance vs project endpoint, các gotcha
      dõi).
   2. Không có bug report mới trong ≥3 ngày làm việc kể từ lần publish beta gần nhất.
   3. Nếu breaking: Migration Guide đã có, ≥1 team migrate thử thành công.
-  4. Core team Maintainer chạy `pnpm changeset pre exit` + version MR như quy trình release
+   4. Core team Maintainer chạy `pnpm changeset pre exit` + version PR như quy trình release
      thường (mục "Quy trình release" trong [Triển khai Git](./git-workflow)).
