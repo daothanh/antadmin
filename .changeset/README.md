@@ -10,7 +10,8 @@ Thư mục này chứa các "changeset" — mô tả thay đổi để tự đ�
 
 ## Lưu ý cấu hình
 - `fixed: [["@antadmin/*"]]` → tất cả package `@antadmin/*` **lockstep** cùng một version, giảm ma trận tương thích.
-- `access: restricted` → publish private lên registry GitLab/Nexus.
+- `access: public` → publish public lên npmjs.com.
 - `baseBranch: main` → so sánh thay đổi với nhánh `main`.
 
-CI sẽ chạy `changeset version` (bump + changelog) rồi `changeset publish` khi merge vào `main`.
+GitHub Actions dùng Changesets v3 để tự mở PR version hoặc đóng gói và publish qua npm trusted
+publishing khi merge vào `main`; workflow không lưu npm token.
