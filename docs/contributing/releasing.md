@@ -33,7 +33,8 @@ từ local khi không có cơ chế xác thực npm tương ứng.
    artifact đóng gói rồi job riêng publish lên npmjs.com.
 
 Chỉ job `publish` có quyền OIDC `id-token: write`; workflow dùng npm trusted publishing và không
-lưu `NPM_TOKEN`/`NODE_AUTH_TOKEN`. GitLab CI vẫn giữ các job AI và deploy Pages.
+lưu `NPM_TOKEN`/`NODE_AUTH_TOKEN`. GitLab CI vẫn giữ các job AI; docs + Storybook deploy qua
+[GitHub Actions](/contributing/git-workflow).
 
 Chi tiết registry và thiết lập trusted publisher: xem [Cấu hình .npmrc](./npmrc).
 

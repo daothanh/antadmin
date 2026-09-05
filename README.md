@@ -23,7 +23,7 @@ packages/
   ai/              # @antadmin/ai            — chat streaming qua BFF + proxy AI gateway + prompts/eval
   mcp/             # @antadmin/mcp           — MCP server tri thức framework, core-only
 playground/        # app test layer (dev nội bộ core)
-docs/              # VitePress → https://web.docs.vtii.vn  (Storybook: /storybook)
+docs/              # VitePress → https://daothanh.github.io/antadmin  (Storybook: /storybook)
 ```
 
 > Release public đầu tiên `1.3.0` được publish sau khi GitHub Actions OIDC hoàn tất. Team sản phẩm chỉ
@@ -49,8 +49,8 @@ pnpm add @antadmin/nuxt-layer-base
 ## Trạng thái
 Nền monorepo + toàn bộ package cốt lõi đã hoàn thiện, sẵn sàng cho release `1.3.0`: theme, ui,
 composables, utils, nuxt-layer-base (BFF/IAM form login + phân quyền theo URI), cli, docs + Storybook
-(Cloudflare Pages).
+(GitHub Pages).
 Nền tảng AI (Giai đoạn 2) đã xong phần code: `@antadmin/ai` (chat streaming + proxy gateway +
 prompts/eval), MCP core-only, chat UI `CChat`, AI review + eval trên CI — xem
-[docs AI](https://web.docs.vtii.vn/guide/ai). Việc tiếp theo: deploy AI gateway (hạ tầng),
+[docs AI](https://daothanh.github.io/antadmin/guide/ai). Việc tiếp theo: deploy AI gateway (hạ tầng),
 onboarding team sản phẩm (Giai đoạn 3).

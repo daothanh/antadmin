@@ -101,7 +101,7 @@ Chỉ dùng client-side (page framework mặc định CSR — xem [Kiến trúc]
 - `CChat`: khung hội thoại + ô nhập (Enter gửi, Shift+Enter xuống dòng, không cắt ngang IME
   tiếng Việt), nút Gửi ↔ Dừng theo `status`, prop `disabled` để khoá (chưa đăng nhập/hết quota).
 - `CChatMessage`: bong bóng theo `role`, `pending` hiện chấm gõ khi chờ token đầu.
-- Chi tiết props: xem [Storybook](https://web.docs.vtii.vn/storybook/).
+- Chi tiết props: xem [Storybook](https://daothanh.github.io/antadmin/storybook/).
 
 ## Prompt library — @antadmin/ai/prompts
 

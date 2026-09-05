@@ -4,11 +4,13 @@ export default defineConfig({
   title: 'AntAdmin Framework',
   description: 'Framework FE nội bộ (Nuxt 4 + Ant Design Vue)',
   lang: 'vi-VN',
+  // GitHub Pages phục vụ docs ở https://daothanh.github.io/antadmin/.
+  base: '/antadmin/',
   themeConfig: {
     nav: [
       { text: 'Hướng dẫn', link: '/guide/getting-started' },
       { text: 'Đóng góp', link: '/contributing/rfc' },
-      { text: 'Storybook', link: 'https://web.docs.vtii.vn/storybook/' },
+      { text: 'Storybook', link: 'https://daothanh.github.io/antadmin/storybook/' },
     ],
     sidebar: {
       '/guide/': [

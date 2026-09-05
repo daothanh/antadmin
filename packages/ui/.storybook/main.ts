@@ -11,8 +11,8 @@ const config: StorybookConfig = {
   core: {
     disableTelemetry: true,
   },
-  // Base tương đối để bản build tĩnh chạy được dưới subpath (vd Cloudflare Pages
-  // phục vụ Storybook ở /storybook/) mà không phụ thuộc đường dẫn tuyệt đối.
+  // Base tương đối để bản build tĩnh chạy được dưới subpath (vd GitHub Pages
+  // phục vụ Storybook ở /antadmin/storybook/) mà không phụ thuộc đường dẫn tuyệt đối.
   viteFinal(viteConfig) {
     viteConfig.base = './'
     return viteConfig

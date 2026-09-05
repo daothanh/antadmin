@@ -65,7 +65,8 @@ bộ AntAdmin nên rủi ro thấp hơn mô hình fork công khai.
 - Trong GitHub Actions settings, cho phép workflow tạo/cập nhật pull request để Changesets quản lý
   PR version.
 - Không tạo `NPM_TOKEN` hoặc `NODE_AUTH_TOKEN`; job publish xác thực bằng OIDC.
-- `.gitlab-ci.yml` tiếp tục chạy AI review/eval và deploy Pages, không publish package.
+- `.gitlab-ci.yml` tiếp tục chạy AI review/eval, không publish package. Docs + Storybook deploy
+  lên GitHub Pages qua `.github/workflows/docs.yml` (base `/antadmin/`, Storybook ở `/storybook`).
 
 ## 6. Quy trình release
 

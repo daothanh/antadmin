@@ -2,7 +2,7 @@
 
 App Nuxt 4 dựng trên framework AntAdmin: `extends @antadmin/nuxt-layer-base` là có sẵn theme antdv,
 component `C*`, auth IAM/BFF và composables. Ngôn ngữ repo: **tiếng Việt** (comment, commit, docs).
-Docs framework: https://web.docs.vtii.vn
+Docs framework: https://daothanh.github.io/antadmin
 
 ## Lệnh thường dùng
 
@@ -43,7 +43,7 @@ Dev không có IAM thật: đặt `NUXT_AUTH_MOCK=true` trong `.env` để bỏ 
 Cần chat/AI trong app: cài `@antadmin/ai`, mount proxy `server/api/ai/chat.post.ts` bằng
 `createAiChatProxy` (env `AI_GATEWAY_URL` + `AI_GATEWAY_KEY` — key KHÔNG bao giờ xuống client),
 UI dùng `CChat` + `useAiChat`, system prompt lấy từ `@antadmin/ai/prompts` (renderPrompt).
-Nhớ thêm `build.transpile: ['@antadmin/ai']`. Docs: https://web.docs.vtii.vn/guide/ai
+Nhớ thêm `build.transpile: ['@antadmin/ai']`. Docs: https://daothanh.github.io/antadmin/guide/ai
 
 ## CI/CD & Deploy
 

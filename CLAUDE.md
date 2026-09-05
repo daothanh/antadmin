@@ -2,7 +2,7 @@
 
 Framework FE nội bộ AntAdmin (Nuxt 4 + Ant Design Vue), mô hình **1 team core → nhiều team sản phẩm**.
 Core publish 9 package framework lên npmjs.com; team sản phẩm consume qua semver và
-`extends @antadmin/nuxt-layer-base`. `@antadmin/mcp` là core-only. Docs: https://web.docs.vtii.vn — ngôn ngữ repo: **tiếng Việt**
+`extends @antadmin/nuxt-layer-base`. `@antadmin/mcp` là core-only. Docs: https://daothanh.github.io/antadmin — ngôn ngữ repo: **tiếng Việt**
 (comment, commit, docs đều viết tiếng Việt).
 
 ## Lệnh thường dùng

@@ -1,7 +1,6 @@
 # CI cho monorepo core AntAdmin.
 stages:
   - quality
-  - deploy
 
 default:
   image: node:24
@@ -94,23 +93,3 @@ ai-eval:
     - when: never
   script:
     - pnpm --filter @antadmin/ai eval
-
-# Publish docs (VitePress) + Storybook lên 1 project Cloudflare Pages.
-# Docs phục vụ ở "/", Storybook nhét vào "/storybook".
-# Cần biến CI/CD: CLOUDFLARE_API_TOKEN (scope Cloudflare Pages: Edit) + CLOUDFLARE_ACCOUNT_ID.
-# wrangler tự đọc 2 biến này từ env.
-deploy:pages:
-  stage: deploy
-  needs:
-    - quality
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: on_success
-    - when: never
-  script:
-    # Build @antadmin/theme + @antadmin/ui trước (Storybook resolve theme qua dist).
-    - pnpm --filter "@antadmin/ui..." build
-    - pnpm --filter @antadmin/ui build-storybook          # -> packages/ui/storybook-static
-    - pnpm --filter docs build                         # -> docs/.vitepress/dist
-    - cp -R packages/ui/storybook-static docs/.vitepress/dist/storybook
-    - pnpm dlx wrangler@3 pages deploy docs/.vitepress/dist --project-name=antadmin-web-framework --branch=main
