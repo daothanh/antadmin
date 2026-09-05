@@ -68,6 +68,11 @@ test('S-REGR-01: chính xác 9 package public MIT; MCP core-only', () => {
     assert.equal(manifest.repository?.url, 'https://github.com/daothanh/antadmin.git', manifest.name)
     assert.equal(manifest.repository?.directory, `packages/${directory}`, manifest.name)
     assert.ok(existsSync(new URL(`../packages/${directory}/LICENSE`, import.meta.url)), manifest.name)
+    for (const [dependency, version] of Object.entries(manifest.dependencies ?? {})) {
+      if (dependency.startsWith('@antadmin/')) {
+        assert.equal(version, 'workspace:*', `${manifest.name} -> ${dependency} phải link local khi dev`)
+      }
+    }
   }
 
   const mcp = JSON.parse(read('packages/mcp/package.json'))
