@@ -68,8 +68,8 @@ jobs:
       - run: pnpm exec turbo run build --filter="./packages/*"
       - uses: changesets/action/pack@v2
         id: pack
-       with:
-         publish-plan-artifact-id: ${{ needs.select-mode.outputs.publish-plan-artifact-id }}
+        with:
+          publish-plan-artifact-id: ${{ needs.select-mode.outputs.publish-plan-artifact-id }}
 
   quality:
     needs: select-mode
