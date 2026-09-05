@@ -11,8 +11,8 @@ export default defineEventHandler(async (event): Promise<{ clients: AuthClientOp
   if (auth.mock) {
     return {
       clients: [
-        { id: 'mock-oap-ocm', code: 'OAP_OCM', name: 'ONE AUTO - QUẢN LÝ TỔ CHỨC' },
-        { id: 'mock-oap-cus', code: 'OAP_CUS', name: 'ONE AUTO - QUẢN LÝ KHÁCH HÀNG' },
+        { id: 'mock-oap-ocm', code: 'OCM', name: 'QUẢN LÝ TỔ CHỨC' },
+        { id: 'mock-oap-cus', code: 'CUS', name: 'QUẢN LÝ KHÁCH HÀNG' },
       ],
     }
   }
