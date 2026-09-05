@@ -1,4 +1,4 @@
-// @antadmin/eslint-config — flat config dùng chung (ESLint 9).
+// @antadmin/eslint-config — flat config dùng chung (ESLint 10).
 //
 // Export các mảng config để consumer "spread" vào eslint.config.mjs của họ:
 //   import { base, vue, noDirectAntdv } from '@antadmin/eslint-config'

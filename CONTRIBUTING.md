@@ -1,7 +1,7 @@
 # Đóng góp — AntAdmin Framework Core
 
 ## Yêu cầu
-- Node >= 20, pnpm >= 11.
+- Node >= 20.19, pnpm >= 11.
 
 ## Access
 

@@ -5,7 +5,7 @@ Core team sở hữu monorepo này và publish công khai 9 package framework l�
 consume qua semver và `extends` Nuxt layer. `@antadmin/mcp` chỉ dùng nội bộ trong repo core.
 
 ## Yêu cầu
-- Node >= 20 (đang dùng 24)
+- Node >= 20.19 (đang dùng 24)
 - pnpm >= 11
 - Turborepo
 
@@ -13,7 +13,7 @@ consume qua semver và `extends` Nuxt layer. `@antadmin/mcp` chỉ dùng nội b
 ```
 packages/
   tsconfig/        # @antadmin/tsconfig      — cấu hình TS dùng chung
-  eslint-config/   # @antadmin/eslint-config — flat config ESLint 9
+  eslint-config/   # @antadmin/eslint-config — flat config ESLint 10
   theme/           # @antadmin/theme         — design token + antd theme + CSS vars, dark mode runtime
   ui/              # @antadmin/ui            — wrapper antdv (C*), Storybook
   composables/     # @antadmin/composables   — useApi/useAuth/usePermission/useTable/useThemeMode

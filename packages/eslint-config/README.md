@@ -1,6 +1,6 @@
 # @antadmin/eslint-config
 
-Flat config ESLint 9 dùng chung.
+Flat config ESLint 10 dùng chung. Yêu cầu Node >= 20.19.
 
 ## Exports
 - `base` — JS/TS recommended + type-imports + no-unused-vars (bỏ qua `_`).
