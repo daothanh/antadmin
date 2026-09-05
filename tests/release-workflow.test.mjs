@@ -58,9 +58,11 @@ test('S-REGR-01: chính xác 9 package public MIT; MCP core-only', () => {
 
   assert.deepEqual(packageDirs.sort(), [...PUBLIC_PACKAGES, 'mcp'].sort())
 
+  const versions = new Set()
   for (const directory of PUBLIC_PACKAGES) {
     const manifest = JSON.parse(read(`packages/${directory}/package.json`))
-    assert.equal(manifest.version, '1.3.0', manifest.name)
+    assert.match(manifest.version, /^\d+\.\d+\.\d+$/, `${manifest.name} phải là version stable`)
+    versions.add(manifest.version)
     assert.equal(manifest.license, 'MIT', manifest.name)
     assert.equal(manifest.private, undefined, manifest.name)
     assert.equal(manifest.publishConfig?.access, 'public', manifest.name)
@@ -74,6 +76,8 @@ test('S-REGR-01: chính xác 9 package public MIT; MCP core-only', () => {
       }
     }
   }
+
+  assert.equal(versions.size, 1, '9 package public phải cùng version (lockstep)')
 
   const mcp = JSON.parse(read('packages/mcp/package.json'))
   assert.equal(mcp.private, true)
