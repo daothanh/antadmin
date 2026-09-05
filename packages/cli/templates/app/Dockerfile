@@ -7,15 +7,9 @@ WORKDIR /app
 RUN corepack enable
 
 # Cài dependencies trước để tận dụng cache layer (frozen = tái lập từ pnpm-lock.yaml).
-# .npmrc của repo khai báo scope @antadmin → registry nội bộ.
 COPY package.json pnpm-lock.yaml .npmrc ./
-# Auth registry nội bộ (@antadmin) truyền qua BuildKit secret: mount file .npmrc chứa
-# dòng _authToken vào /root/.npmrc — chỉ tồn tại trong lúc RUN, không nằm lại layer/image.
-#   CI:    tạo file token rồi build với --secret id=npmrc,src=<file>
-#   Local: docker build --secret id=npmrc,src=$HOME/.npmrc .
 # cache mount: cache tải gói nằm lại trên host build giữa các lần build.
-RUN --mount=type=secret,id=npmrc,target=/root/.npmrc \
-    --mount=type=cache,target=/root/.local/share/pnpm/store \
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm config set store-dir /root/.local/share/pnpm/store && \
     pnpm install --frozen-lockfile
 

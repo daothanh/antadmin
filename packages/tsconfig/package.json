@@ -2,7 +2,7 @@
   "name": "@antadmin/tsconfig",
   "version": "1.3.0",
   "description": "Cấu hình TypeScript dùng chung cho framework AntAdmin",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "files": [
     "base.json",
     "nuxt.json",

@@ -2,7 +2,17 @@
   "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "fixed": [["@antadmin/*"]],
+  "fixed": [[
+    "@antadmin/ai",
+    "@antadmin/cli",
+    "@antadmin/composables",
+    "@antadmin/eslint-config",
+    "@antadmin/nuxt-layer-base",
+    "@antadmin/theme",
+    "@antadmin/tsconfig",
+    "@antadmin/ui",
+    "@antadmin/utils"
+  ]],
   "linked": [],
   "access": "public",
   "baseBranch": "main",

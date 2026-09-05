@@ -1,13 +1,13 @@
 # Triển khai Git
 
-Hướng dẫn đưa monorepo core lên Git (GitLab) và quy trình làm việc hằng ngày.
+Hướng dẫn đưa monorepo core lên GitHub và quy trình làm việc hằng ngày.
 
 ## 1. Khởi tạo remote (lần đầu)
 
-Repo đã có lịch sử local trên nhánh `main`. Tạo project trống trên GitLab rồi:
+Repo canonical là `github.com/daothanh/antadmin` trên nhánh `main`:
 
 ```bash
-git remote add origin git@gitlab.antadmin.vn:frontend/framework-core.git
+git remote add origin git@github.com:daothanh/antadmin.git
 git push -u origin main
 ```
 
@@ -31,7 +31,7 @@ git switch -c feat/use-table-filters
 pnpm lint && pnpm typecheck && pnpm build
 pnpm changeset            # nếu có đổi package
 git push -u origin feat/use-table-filters
-# mở Merge Request trên GitLab
+# mở Pull Request trên GitHub
 ```
 
 ## 3. Commit convention
@@ -42,22 +42,17 @@ Dùng [Conventional Commits](https://www.conventionalcommits.org): `feat:`, `fix
 > Conventional Commits là cho lịch sử git. **Bump version + changelog do Changesets quyết định**
 > (xem [Release](./releasing)). Mỗi MR đổi package **bắt buộc** kèm một changeset.
 
-## 4. Bảo vệ nhánh main (GitLab settings)
+## 4. Bảo vệ nhánh main (GitHub settings)
 
-- Settings → Repository → **Protected branches**: `main` = Maintainers push, no force-push.
-- Settings → Merge requests: bật **Pipelines must succeed** + **All threads resolved**.
-- Yêu cầu tối thiểu 1 approval cho MR.
-- Bật **Code Owner approval** (Settings → Merge requests → Merge request approvals) để file
-  `CODEOWNERS` ở root repo thật sự chặn merge theo package — nếu không bật, file chỉ mang tính
-  tham khảo. Owner trong `CODEOWNERS` hiện là placeholder (`@team-ui-owners`...),
-  phải tạo group GitLab thật khớp tên trước khi bật rule này.
+- Settings → Branches → branch protection rule cho `main`: yêu cầu pull request, không force-push.
+- Bật required status checks cho quality/release contract và yêu cầu tối thiểu một approval.
+- Bật code-owner review sau khi thay các placeholder trong `CODEOWNERS` bằng GitHub team thật.
 
 ### Quyền cho dev team sản phẩm đóng góp vào core
 
 Team sản phẩm dev trên repo riêng — để mở MR vào core, cấp:
-- **Developer** trên project `framework-core` (không Maintainer).
-- **Reporter ở group `antadmin`** (để PAT cá nhân cài `@antadmin/*` từ registry khi `pnpm install`
-  monorepo core — xem gotcha registry trong CLAUDE.md).
+- Quyền write trên GitHub repository `daothanh/antadmin` để tạo branch và pull request.
+- Không cần quyền registry/PAT để cài package public từ npmjs.
 
 Dùng **direct-branch, không fork**: job CI `ai-review`/`ai-eval` cần biến bảo mật
 (`ANTHROPIC_API_KEY`, `GITLAB_REVIEW_TOKEN`) mà fork thường không kế thừa; team sản phẩm là nội
@@ -65,12 +60,12 @@ bộ AntAdmin nên rủi ro thấp hơn mô hình fork công khai.
 
 ## 5. Thiết lập release trên GitHub/npmjs.com
 
-- Trong npmjs.com, cấu hình trusted publisher cho từng package với owner `daothanh`, repository
-  `antadmin` và workflow `release.yml`.
+- Trong npmjs.com, cấu hình trusted publisher cho từng trong 9 package public với owner `daothanh`,
+  repository `antadmin`, workflow `release.yml` và environment `npm-production`.
 - Trong GitHub Actions settings, cho phép workflow tạo/cập nhật pull request để Changesets quản lý
   PR version.
 - Không tạo `NPM_TOKEN` hoặc `NODE_AUTH_TOKEN`; job publish xác thực bằng OIDC.
-- `.gitlab-ci.yml` tiếp tục chạy quality, AI review/eval và deploy Pages, không publish package.
+- `.gitlab-ci.yml` tiếp tục chạy AI review/eval và deploy Pages, không publish package.
 
 ## 6. Quy trình release
 
@@ -88,13 +83,13 @@ xem [Release](./releasing).
 Mỗi sản phẩm là **repo riêng**, không clone monorepo core:
 
 ```bash
-npx @antadmin/cli antadmin-orders     # đã có .gitlab-ci.yml + .npmrc
+npx @antadmin/cli antadmin-orders     # đã có .gitlab-ci.yml + .npmrc, không cần npm token
 cd antadmin-orders && git init && git add -A && git commit -m "chore: init"
 git remote add origin git@gitlab.antadmin.vn:product/antadmin-orders.git
 git push -u origin main
 ```
 
-CI của team sản phẩm cũng cần biến `NPM_TOKEN` để cài `@antadmin/*` từ registry.
+CI của team sản phẩm cài `@antadmin/*` từ npmjs mặc định, không cần biến npm token.
 
 ## 8. .gitignore
 
@@ -120,5 +115,5 @@ file trong repo:
 7. **Tạo labels**: `rfc`, `contribution::t1-fix`, `contribution::t2-feature`,
    `contribution::t3-breaking`, `status::needs-rfc`, `status::good-first-contribution`,
    `status::declined`, `needs-beta-validation`, `feature-request`.
-8. **Release npmjs.com**: cấu hình trusted publisher cho cả 10 package và cho phép GitHub Actions
+8. **Release npmjs.com**: cấu hình trusted publisher cho 9 package public và cho phép GitHub Actions
    tạo/cập nhật pull request (mục 5).

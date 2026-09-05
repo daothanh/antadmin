@@ -4,6 +4,8 @@
 
 ### Minor Changes
 
+- Thêm `CChat` và `CChatMessage` cho UI chat AI, wired bằng props/emit với `useAiChat`.
+
 - 5c1d097: feat: error handler toàn cục (3 tầng)
 
   - **@antadmin/utils**: helper phân loại lỗi — `isAuthError`/`isForbidden`/`isValidation`/`isServerError`/`isNetworkError`, `errorSeverity`, `getFieldErrors`.
@@ -18,6 +20,8 @@
     bọc `Modal.confirm` với style AntAdmin (hỗ trợ `danger`).
 
 ### Patch Changes
+
+- Sửa lỗi TS7022 khi Vite sinh declaration cho CForm/CTable forward slot.
 
 - Updated dependencies [5c1d097]
   - @antadmin/utils@1.3.0

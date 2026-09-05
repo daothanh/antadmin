@@ -47,6 +47,7 @@ export default defineConfig({
           items: [
             { text: 'Triển khai Git', link: '/contributing/git-workflow' },
             { text: 'Cấu hình .npmrc', link: '/contributing/npmrc' },
+            { text: 'Bootstrap npmjs', link: '/contributing/npm-bootstrap' },
             { text: 'RFC Process', link: '/contributing/rfc' },
             { text: 'Release', link: '/contributing/releasing' },
           ],

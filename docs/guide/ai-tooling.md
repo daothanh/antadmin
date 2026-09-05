@@ -1,17 +1,16 @@
 # AI tooling cho dev
 
-Bộ công cụ để Claude Code / Cursor làm việc đúng chuẩn framework trong cả repo core lẫn repo
-sản phẩm. App scaffold bằng `create-antadmin-app` đã có sẵn toàn bộ cấu hình dưới đây.
+Bộ công cụ để Claude Code / Cursor làm việc đúng chuẩn framework trong repo core. App scaffold tạo
+`CLAUDE.md` và guardrail; MCP nội bộ không được cấu hình cho consumer public.
 
 ## Có sẵn trong repo
 
 | File | Vai trò |
 |---|---|
 | `CLAUDE.md` | Context chuẩn cho AI: kiến trúc, quy ước, gotchas — AI đọc mỗi session |
-| `.mcp.json` | Khai báo MCP server: `antadmin` (tri thức framework) + `gitlab` (MR/issue/CI) |
 | `.claude/settings.json` | Guardrail: allow sẵn lệnh lint/test/build + git read-only; **deny** đọc `.env*`, `~/.npmrc`, force-push |
 
-## MCP server @antadmin/mcp
+## MCP server core-only
 
 Phơi tri thức framework cho AI — component `C*` (props/emits thật, không đoán), design token
 `--antadmin-*`, docs + gotchas, danh sách package:
@@ -23,8 +22,8 @@ Phơi tri thức framework cho AI — component `C*` (props/emits thật, không
 | `search_docs` | Tra cứu docs + gotchas theo từ khoá |
 | `list_packages` | Package @antadmin/* + version + vai trò |
 
-Dữ liệu **sinh lúc build** và ship kèm package → chạy standalone trong repo sản phẩm qua
-`npx -y @antadmin/mcp` (cần `.npmrc` trỏ group registry như mọi package `@antadmin/*`).
+Dữ liệu **sinh lúc build** trong repository core. `@antadmin/mcp` là package private và không chạy qua
+`npx` trong repository sản phẩm.
 
 ## Thiết lập mỗi dev làm 1 lần
 
@@ -33,7 +32,7 @@ Dữ liệu **sinh lúc build** và ship kèm package → chạy standalone tron
 export GITLAB_TOKEN=glpat-...
 ```
 
-Kiểm tra: mở Claude Code trong repo, hỏi "CChat có những props nào?" — trả lời đúng props
+Kiểm tra trong repo core: mở Claude Code và hỏi "CChat có những props nào?" — trả lời đúng props
 nghĩa là MCP `antadmin` chạy.
 
 ## Skill nội bộ (repo core)

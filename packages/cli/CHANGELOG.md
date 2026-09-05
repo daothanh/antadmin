@@ -2,11 +2,16 @@
 
 ## 1.3.0
 
+### Minor Changes
+
+- Scaffold bổ sung CI/CD Docker/GitLab Runner, `CLAUDE.md` và guardrail cho AI coding assistant.
+
 ### Patch Changes
 
 - ef370ac: feat(cli): scaffold kèm trang danh sách mẫu chạy được ngay (`app/pages/orders`) —
   minh hoạ `CPageHeader` + `useTable` + `CTable` (phân trang/sort) + `CStatus`/`CTag`
   và nút gating bằng `usePermission`. Kèm mục nav "Đơn hàng" trong `app.config.ts`.
+- Bỏ cấu hình registry private và MCP khỏi scaffold; package framework public được cài trực tiếp từ npmjs.
 
 ## 1.2.1
 

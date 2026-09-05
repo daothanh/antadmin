@@ -35,9 +35,8 @@ Dev không có IAM thật: đặt `NUXT_AUTH_MOCK=true` trong `.env` để bỏ 
   cần override style thì dùng global CSS, và ưu tiên đề xuất vào `@antadmin/theme` thay vì CSS cục bộ.
 - **Cookie session chỉ giữ token** (giới hạn 4KB) — không nhét thêm profile/permissions vào cookie;
   lấy user info qua `useAuth()`.
-- **`.npmrc` registry**: scope `@antadmin` trỏ group endpoint GitLab, auth qua env `NPM_TOKEN`
-  (Group Deploy Token, scope `read_package_registry`). **Không commit token.** Lỗi 404 khi install
-  gần như chắc chắn là thiếu/sai `NPM_TOKEN`.
+- **Package framework**: các package `@antadmin/*` public được cài từ npmjs mặc định, không cần
+  thêm registry override hoặc token npm.
 
 ## Tính năng AI (opt-in)
 
@@ -55,7 +54,7 @@ prod deploy thủ công bằng `scripts/deploy-prod.sh <tag>` (dùng `docker-com
 **Trước khi dùng**: đổi `REGISTRY_HOST`/`IMAGE` trong `.gitlab-ci.yml` và trong
 `scripts/deploy-prod.sh` cho khớp registry/namespace thật, đổi `tags: [dev]` nếu
 team dùng runner khác. Biến CI/CD cần khai (Settings → CI/CD → Variables, masked):
-`REGISTRY_USER`, `REGISTRY_PASSWORD`, `NPM_TOKEN`, `NUXT_SESSION_SECRET`, `NUXT_AUTH_BASE_URL`.
+`REGISTRY_USER`, `REGISTRY_PASSWORD`, `NUXT_SESSION_SECRET`, `NUXT_AUTH_BASE_URL`.
 
 ## Cấu trúc & trang mẫu
 

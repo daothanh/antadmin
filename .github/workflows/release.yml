@@ -7,6 +7,10 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
 jobs:
   select-mode:
     runs-on: ubuntu-latest
@@ -44,7 +48,9 @@ jobs:
       - uses: changesets/action/version@v2
 
   pack:
-    needs: select-mode
+    needs:
+      - select-mode
+      - quality
     if: needs.select-mode.outputs.mode == 'publish'
     runs-on: ubuntu-latest
     permissions:
@@ -62,8 +68,27 @@ jobs:
       - run: pnpm exec turbo run build --filter="./packages/*"
       - uses: changesets/action/pack@v2
         id: pack
+       with:
+         publish-plan-artifact-id: ${{ needs.select-mode.outputs.publish-plan-artifact-id }}
+
+  quality:
+    needs: select-mode
+    if: needs.select-mode.outputs.mode == 'publish'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
         with:
-          publish-plan-artifact-id: ${{ needs.select-mode.outputs.publish-plan-artifact-id }}
+          persist-credentials: false
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: false
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm test:release
 
   publish:
     needs: pack
@@ -71,6 +96,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
+    environment: npm-production
     steps:
       - uses: actions/checkout@v7
         with:

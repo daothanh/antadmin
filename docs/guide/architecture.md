@@ -2,9 +2,9 @@
 
 ## Mô hình phân phối
 
-Core team sở hữu monorepo (pnpm + Turborepo), publish packages `@antadmin/*` lên private registry
-(GitLab/Nexus). Team sản phẩm **không** clone monorepo core — chỉ consume qua semver và `extends`
-Nuxt layer.
+Core team sở hữu monorepo (pnpm + Turborepo), publish 9 package framework public lên npmjs.com. Team
+sản phẩm **không** clone monorepo core — chỉ consume qua semver và `extends` Nuxt layer. MCP là công cụ
+core-only, không nằm trong API phân phối cho sản phẩm.
 
 ```
 framework-core/ (core team)

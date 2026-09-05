@@ -9,7 +9,8 @@ Thư mục này chứa các "changeset" — mô tả thay đổi để tự đ�
 4. Commit file `.md` được sinh ra trong thư mục này cùng PR
 
 ## Lưu ý cấu hình
-- `fixed: [["@antadmin/*"]]` → tất cả package `@antadmin/*` **lockstep** cùng một version, giảm ma trận tương thích.
+- `fixed` liệt kê rõ 9 package public **lockstep** cùng một version, giảm ma trận tương thích.
+  `@antadmin/mcp` là package private/core-only và không thuộc fixed group.
 - `access: public` → publish public lên npmjs.com.
 - `baseBranch: main` → so sánh thay đổi với nhánh `main`.
 

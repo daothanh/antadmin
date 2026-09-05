@@ -117,7 +117,7 @@ async function main() {
 
   const vars = {
     __APP_NAME__: name,
-    __TASCO_VERSION__: await getAntAdminVersion(),
+    __ANTADMIN_VERSION__: await getAntAdminVersion(),
   }
   await scaffold(target, vars)
 

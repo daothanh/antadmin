@@ -2,7 +2,7 @@
   "name": "@antadmin/cli",
   "version": "1.3.0",
   "description": "create-antadmin-app — scaffold project Nuxt mới theo chuẩn framework AntAdmin",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "create-antadmin-app": "./bin/create-antadmin-app.mjs"

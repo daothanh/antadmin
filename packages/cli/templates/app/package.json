@@ -13,12 +13,12 @@
   },
   "dependencies": {
     "@tabler/icons-vue": "^3.41.1",
-    "@antadmin/nuxt-layer-base": "__TASCO_VERSION__",
-    "@antadmin/ui": "__TASCO_VERSION__"
+    "@antadmin/nuxt-layer-base": "__ANTADMIN_VERSION__",
+    "@antadmin/ui": "__ANTADMIN_VERSION__"
   },
   "devDependencies": {
-    "@antadmin/eslint-config": "__TASCO_VERSION__",
-    "@antadmin/tsconfig": "__TASCO_VERSION__",
+    "@antadmin/eslint-config": "__ANTADMIN_VERSION__",
+    "@antadmin/tsconfig": "__ANTADMIN_VERSION__",
     "eslint": "^9.18.0",
     "nuxt": "^4.0.0",
     "typescript": "^5.7.3",

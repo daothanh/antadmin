@@ -1,8 +1,9 @@
 {
   "name": "@antadmin/mcp",
   "version": "0.0.0",
+  "private": true,
   "description": "MCP server nội bộ AntAdmin — phơi tri thức framework (component C*, design token, docs, package) cho AI của team sản phẩm",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.mjs",
@@ -49,9 +50,5 @@
     "type": "git",
     "url": "https://github.com/daothanh/antadmin.git",
     "directory": "packages/mcp"
-  },
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org"
   }
 }

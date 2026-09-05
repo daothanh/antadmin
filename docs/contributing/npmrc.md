@@ -1,7 +1,7 @@
 # Cấu hình npmjs.com và trusted publishing
 
-Các package `@antadmin/*` được publish public lên npmjs.com. Repo không cần redirect scope
-`@antadmin` trong `.npmrc` và consumer không cần token để cài package.
+Chín package framework được publish public lên npmjs.com. `@antadmin/mcp` là core-only và không
+được publish. Repo không cần redirect scope `@antadmin` trong `.npmrc`; consumer không cần token.
 
 ## Consumer
 
@@ -16,7 +16,7 @@ các package public.
 
 ## Package metadata
 
-Mỗi `packages/*/package.json` khai báo:
+Mỗi trong chín `packages/*/package.json` public khai báo:
 
 ```json
 {
@@ -34,15 +34,15 @@ Mỗi `packages/*/package.json` khai báo:
 
 ## Trusted publisher trên npmjs.com
 
-Maintainer cấu hình trusted publisher cho từng package `@antadmin/*` trong npmjs.com với:
+Maintainer cấu hình trusted publisher cho từng package public trong npmjs.com với:
 
 - Organization/user GitHub: `daothanh`
 - Repository: `antadmin`
 - Workflow: `release.yml`
 
 Workflow `.github/workflows/release.yml` chạy trên GitHub-hosted runner. Quyền OIDC
-`id-token: write` chỉ nằm ở job `publish`; các job chọn mode, version và pack không có quyền này.
-Không tạo secret npm dự phòng trong GitHub Actions.
+`id-token: write` chỉ nằm ở job `publish`; quality, version và pack không có quyền này. Publish dùng
+environment `npm-production`; không tạo secret npm dự phòng trong GitHub Actions.
 
 Trusted publishing yêu cầu Node.js từ `22.14.0` và npm từ `11.5.1`; workflow dùng Node.js 24.
 GitHub repository cũng phải cho phép Actions tạo/cập nhật pull request để job `version` quản lý PR
@@ -54,5 +54,5 @@ version.
 pnpm test:release
 ```
 
-Lệnh này kiểm tra graph release, quyền OIDC, metadata của toàn bộ package và việc gỡ job release npm
-cũ khỏi GitLab CI. Lệnh không publish package.
+Lệnh này kiểm tra graph release, quality gate, quyền OIDC, metadata public/private và việc gỡ job
+release npm cũ khỏi GitLab CI. Lệnh không publish package.

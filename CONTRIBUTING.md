@@ -5,12 +5,9 @@
 
 ## Access
 
-Team sản phẩm dev trên repo **riêng** (không clone monorepo core). Để đóng góp vào core, cần
-xin core team cấp trên GitLab:
-- **Developer** trên project `framework-core` — đủ để tạo branch/push/mở MR (không push/merge
-  thẳng `main`, branch protection chặn).
-- **Reporter ở group `antadmin`** (khác project) — để PAT cá nhân cài được `@antadmin/*` từ registry khi
-  `pnpm install` monorepo core trên máy.
+Team sản phẩm dev trên repo **riêng** (không clone monorepo core). Để đóng góp vào core, cần quyền
+write trên GitHub repository `daothanh/antadmin` để tạo branch và pull request; không push/merge thẳng
+`main`. Package public cài từ npmjs, không cần PAT registry.
 
 Review routing theo package qua [`CODEOWNERS`](./CODEOWNERS) — MR đổi `packages/ui/**` cần owner
 UI duyệt, đổi `docs/contributing/**`/`CLAUDE.md`/CI luôn cần core team duyệt.

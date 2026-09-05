@@ -12,7 +12,7 @@ pnpm install
 pnpm dev
 ```
 
-Project sinh ra đã `extends ['@antadmin/nuxt-layer-base']`, có `.npmrc` trỏ registry `@antadmin`,
+Project sinh ra đã `extends ['@antadmin/nuxt-layer-base']`, có `.npmrc` cho pnpm,
 `tsconfig`/`eslint` chuẩn, và CI/CD sẵn dùng (`.gitlab-ci.yml` + `Dockerfile` +
 `docker-compose.*.yml` + `scripts/deploy-prod.sh`) — xem [Deploy](/guide/deploy).
 
@@ -40,10 +40,7 @@ export default defineNuxtConfig({
 })
 ```
 
-```ini
-# .npmrc
-@antadmin:registry=https://github.com/api/v4/packages/npm/
-```
+Package framework được cài trực tiếp từ npmjs mặc định, không thêm scope registry hoặc token npm.
 
 ## Trang đầu tiên
 

@@ -15,8 +15,8 @@ Tuỳ chọn:
 
 ## Project sinh ra gồm
 - `nuxt.config.ts` đã `extends ['@antadmin/nuxt-layer-base']`
-- `.npmrc` trỏ registry @antadmin, `tsconfig` + `eslint.config` chuẩn
+- `.npmrc` với cấu hình pnpm, `tsconfig` + `eslint.config` chuẩn
 - `.gitlab-ci.yml` (lint → typecheck → build)
 - `.env.example`, `.gitignore`, `app/pages/index.vue` mẫu
 
-Placeholder `__APP_NAME__` và `__TASCO_VERSION__` được thay khi scaffold.
+Placeholder `__APP_NAME__` và `__ANTADMIN_VERSION__` được thay khi scaffold.

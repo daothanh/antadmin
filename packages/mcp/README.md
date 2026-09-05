@@ -1,7 +1,7 @@
 # @antadmin/mcp
 
-MCP server **nội bộ** phơi tri thức framework AntAdmin cho AI của team sản phẩm (Claude Code,
-Cursor…). Giúp AI dùng đúng component/token/quy ước thay vì đoán hoặc import antdv thẳng.
+MCP server **core-only** phơi tri thức framework AntAdmin cho AI của đội core. Package này không
+được publish lên npmjs; team sản phẩm dùng tài liệu public của framework.
 
 ## Tool
 
@@ -18,20 +18,6 @@ Cursor…). Giúp AI dùng đúng component/token/quy ước thay vì đoán ho�
 Tri thức được **sinh lúc build** (`scripts/generate.ts`) từ nguồn core vào `data/*.json` và ship
 kèm package → server chạy **standalone** trong repo sản phẩm, không cần monorepo core. Chạy lại
 `pnpm build` mỗi khi component/token/docs đổi (CI release lo việc này).
-
-## Dùng trong repo sản phẩm
-
-App scaffold bằng `@antadmin/cli` đã có sẵn trong `.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "antadmin": { "command": "npx", "args": ["-y", "@antadmin/mcp"] }
-  }
-}
-```
-
-Cần `.npmrc` trỏ scope `@antadmin` tới GitLab group registry (như khi cài các `@antadmin/*` khác).
 
 ## Phát triển
 

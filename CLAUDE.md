@@ -1,8 +1,8 @@
 # CLAUDE.md — AntAdmin Framework Core
 
 Framework FE nội bộ AntAdmin (Nuxt 4 + Ant Design Vue), mô hình **1 team core → nhiều team sản phẩm**.
-Core publish `@antadmin/*` lên GitLab Package Registry (group `antadmin`); team sản phẩm consume qua semver
-và `extends @antadmin/nuxt-layer-base`. Docs: https://web.docs.vtii.vn — ngôn ngữ repo: **tiếng Việt**
+Core publish 9 package framework lên npmjs.com; team sản phẩm consume qua semver và
+`extends @antadmin/nuxt-layer-base`. `@antadmin/mcp` là core-only. Docs: https://web.docs.vtii.vn — ngôn ngữ repo: **tiếng Việt**
 (comment, commit, docs đều viết tiếng Việt).
 
 ## Lệnh thường dùng
@@ -31,7 +31,7 @@ phải kèm test, không là fail CI. Đổi prompt trong `@antadmin/ai` → tă
 | `@antadmin/nuxt-layer-base` | Nuxt layer + Nitro BFF (server/api catch-all `[...].ts`) + IAM login — entry point duy nhất của team sản phẩm |
 | `@antadmin/cli` | create-antadmin-app (scaffold) |
 | `@antadmin/ai` | useAiChat streaming + createAiChatProxy (BFF→gateway OpenAI-compatible, key server-side) + `/prompts` (definePrompt có version) + `/eval` |
-| `@antadmin/mcp` | MCP server tri thức framework (component/token/docs/package) — data sinh lúc `pnpm build` từ nguồn core, ship kèm package |
+| `@antadmin/mcp` | MCP server tri thức framework core-only (component/token/docs/package) — data sinh lúc `pnpm build` từ nguồn core |
 | `eslint-config` / `tsconfig` | Config dùng chung |
 
 ## Quy tắc kiến trúc (vi phạm = reject MR)
@@ -50,16 +50,14 @@ phải kèm test, không là fail CI. Đổi prompt trong `@antadmin/ai` → tă
   vẫn giữ Nitro BFF. Đừng bật SSR lại cho page dùng antdv nếu chưa test kỹ.
 - **Đăng nhập IAM**: form login qua endpoint IAM AntAdmin; `userInfo` gọi bằng **POST không kèm Bearer**;
   cookie chỉ giữ token (giới hạn 4KB) — không nhét thêm profile vào cookie.
-- **Registry 404 với người ngoài team core**: scope `@antadmin` phải trỏ **group endpoint**
-  (`/api/v4/groups/antadmin/-/packages/npm/`), auth bằng Group Deploy Token scope
-  `read_package_registry`. PAT cá nhân chỉ hoạt động khi user là member (≥ Reporter).
+- **Public npm**: consumer cài 9 package framework từ npmjs mặc định, không thêm scope registry hay token.
+  MCP không phải dependency public.
 
 ## Release
 
 1. Mỗi MR đổi package phải kèm `.changeset/*.md` (`pnpm changeset`).
-2. Release: `pnpm release` (CI) = build + `changeset publish` lên GitLab registry.
-3. Token: install dùng `read_package_registry`, publish trong CI dùng `write_package_registry`.
-   **Không bao giờ commit token** — luôn qua env `NPM_TOKEN`.
+2. Release: GitHub Actions tạo Version PR; sau khi merge, workflow publish lên npmjs bằng OIDC.
+3. Trusted publisher cấu hình từng package public; không lưu npm write token trong CI.
 
 ## Trước khi mở MR
 

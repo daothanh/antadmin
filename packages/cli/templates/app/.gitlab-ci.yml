@@ -20,8 +20,6 @@
 #
 # Biến ở Settings → CI/CD → Variables (Masked, Protected):
 #   REGISTRY_USER, REGISTRY_PASSWORD   đăng nhập registry image
-#   NPM_TOKEN                          token đọc package registry @antadmin
-#                                      (Group Deploy Token, scope read_package_registry)
 #   NUXT_SESSION_SECRET                khoá ký cookie session (bắt buộc, xem .env.example)
 #   NUXT_AUTH_BASE_URL                 URL IAM/gateway (compose có default nếu trống)
 
@@ -43,15 +41,6 @@ workflow:
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_TAG'
 
-# Token registry npm ghi ra file .npmrc tạm để truyền vào docker build dạng
-# BuildKit secret (không lộ trong layer image). Tên file theo CI_JOB_ID để job
-# chạy song song không giẫm nhau.
-.docker_npm_secret: &docker_npm_secret
-  before_script:
-    - umask 077 && printf '//github.com/api/v4/packages/npm/:_authToken=%s\n' "$NPM_TOKEN" > "/tmp/npmrc.$CI_JOB_ID"
-  after_script:
-    - rm -f "/tmp/npmrc.$CI_JOB_ID"
-
 # ---------------------------------------------------------------------------
 # 1) Check: eslint + vue-tsc — chạy trong docker (host không cần node/pnpm).
 #    Target "check" dùng chung layer cài deps với build:image nên lần build
@@ -61,10 +50,9 @@ check:
   stage: check
   tags:
     - dev
-  <<: *docker_npm_secret
   retry: 2 # mạng runner ra npm registry chập chờn — tự retry nếu fail
   script:
-    - docker build --target check --secret "id=npmrc,src=/tmp/npmrc.$CI_JOB_ID" .
+    - docker build --target check .
 
 # ---------------------------------------------------------------------------
 # 2) Build & push image bằng docker của host (chạy trên runner shell tag "dev").
@@ -74,12 +62,11 @@ build:image:
   stage: build
   tags:
     - dev
-  <<: *docker_npm_secret
   retry: 2
   script:
     - echo "$REGISTRY_PASSWORD" | docker login "$REGISTRY_HOST" -u "$REGISTRY_USER" --password-stdin
     # Tag theo SHA (bất biến, dùng để deploy) + theo tên nhánh/tag (main / dev / vX.Y.Z).
-    - docker build --secret "id=npmrc,src=/tmp/npmrc.$CI_JOB_ID" -t "$IMAGE:$CI_COMMIT_SHORT_SHA" -t "$IMAGE:$CI_COMMIT_REF_SLUG" .
+    - docker build -t "$IMAGE:$CI_COMMIT_SHORT_SHA" -t "$IMAGE:$CI_COMMIT_REF_SLUG" .
     - docker push "$IMAGE:$CI_COMMIT_SHORT_SHA"
     - docker push "$IMAGE:$CI_COMMIT_REF_SLUG"
   rules:

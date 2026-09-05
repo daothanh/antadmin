@@ -23,8 +23,8 @@ dev               → check → build+push image → deploy lên máy dev (tự 
 main / tag        → check → build+push image (prod pull thủ công qua script)
 ```
 
-Token registry `@antadmin` (`NPM_TOKEN`) được truyền vào `docker build` dạng
-**BuildKit secret** (`--secret id=npmrc,...`) nên không lộ trong layer image.
+Package `@antadmin/*` public được cài trực tiếp từ npmjs trong Docker build; không cần npm token hoặc
+BuildKit secret cho package framework.
 
 ## Trước khi dùng — bắt buộc chỉnh theo hạ tầng thật của team
 
@@ -44,7 +44,6 @@ Settings → CI/CD → Variables (đánh dấu **Masked**, **Protected** cho nh�
 | Biến | Ý nghĩa |
 |---|---|
 | `REGISTRY_USER`, `REGISTRY_PASSWORD` | Đăng nhập registry image |
-| `NPM_TOKEN` | Đọc package registry `@antadmin` (Group Deploy Token, scope `read_package_registry`) |
 | `NUXT_SESSION_SECRET` | Khoá ký cookie session — bắt buộc ở production |
 | `NUXT_AUTH_BASE_URL` | URL IAM/gateway (compose có default nếu để trống) |
 

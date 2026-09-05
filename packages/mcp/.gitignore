@@ -1,2 +1,2 @@
-# Tri thức sinh lúc build — không commit, `files` vẫn ship khi publish.
+# Tri thức sinh lúc build — không commit, chỉ dùng khi chạy MCP trong repo core.
 data/
