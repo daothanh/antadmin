@@ -1,6 +1,6 @@
 {
   "name": "@antadmin/theme",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Design token + theme antdv (ConfigProvider) + CSS variables cho framework AntAdmin",
   "license": "MIT",
   "type": "module",
