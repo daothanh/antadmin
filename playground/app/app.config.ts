@@ -7,7 +7,7 @@ import type { NavItem } from '@antadmin/ui'
 export default defineAppConfig({
   antadmin: {
     appTitle: 'AntAdmin Playground',
-    footerText: '© Tập đoàn AntAdmin — Playground',
+    footerText: '© AntAdmin — Playground',
     topNav: [
       { label: 'Tổng quan', path: '/' },
       { label: 'Bán hàng', path: '/orders' },

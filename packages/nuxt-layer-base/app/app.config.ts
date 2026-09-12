@@ -8,7 +8,7 @@ export default defineAppConfig({
     themeMode: 'light' as 'light' | 'dark',
     // Tiêu đề + chân trang hiển thị ở layout shell.
     appTitle: 'AntAdmin',
-    footerText: '© Tập đoàn AntAdmin',
+    footerText: '© AntAdmin',
     // Menu module ngang trên header (vd ĐIỀU HÀNH, TỔ CHỨC...). Rỗng → ẩn.
     topNav: [] as NavItem[],
     // Menu điều hướng sidebar. Mặc định rỗng — dự án tự khai báo.

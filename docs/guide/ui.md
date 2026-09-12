@@ -86,7 +86,7 @@ import type { NavItem } from '@antadmin/ui'
 export default defineAppConfig({
   antadmin: {
     appTitle: 'Sản phẩm A',
-    footerText: '© Tập đoàn AntAdmin',
+    footerText: '© AntAdmin',
     // Menu module ngang trên header (bỏ trống nếu không dùng).
     topNav: [
       { label: 'Tổng quan', path: '/' },

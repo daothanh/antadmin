@@ -1,6 +1,6 @@
 # AntAdmin Framework Core
 
-Framework FE nội bộ (Nuxt 4 + Ant Design Vue) cho mô hình tập đoàn: 1 team core, nhiều team sản phẩm.
+Framework FE (Nuxt 4 + Ant Design Vue) cho mô hình tập đoàn: 1 team core, nhiều team sản phẩm.
 Core team sở hữu monorepo này và publish công khai 9 package framework lên npmjs.com; team sản phẩm
 consume qua semver và `extends` Nuxt layer. `@antadmin/mcp` chỉ dùng nội bộ trong repo core.
 

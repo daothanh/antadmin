@@ -2,7 +2,7 @@
 // Mọi nơi (antdv ConfigProvider, CSS variables, scoped style của @antadmin/ui)
 // đều suy ra từ đây. Đổi brand → chỉ sửa file này.
 //
-// Palette nền: navy (#203368) + accent cam (#ff9800) — nhận diện tập đoàn AntAdmin.
+// Palette nền: navy (#203368) + accent cam (#ff9800) — nhận diện AntAdmin.
 // Cấu trúc token bám sát nhu cầu thực tế của sản phẩm nội bộ (tham khảo OneAuto):
 // có đủ surface/text/line nhiều cấp, semantic soft, gradient và shadow.
 

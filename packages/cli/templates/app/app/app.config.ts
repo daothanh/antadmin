@@ -9,7 +9,7 @@ import type { NavItem } from '@antadmin/ui'
 export default defineAppConfig({
   antadmin: {
     appTitle: '__APP_NAME__',
-    footerText: '© Tập đoàn AntAdmin',
+    footerText: '© AntAdmin',
     topNav: [
       { label: 'Tổng quan', path: '/' },
     ] satisfies NavItem[],
