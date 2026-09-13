@@ -12,7 +12,7 @@ pnpm build | lint | typecheck | test   # chạy qua Turborepo (dependsOn ^build)
 pnpm --filter @antadmin/ui test           # test 1 package
 pnpm --filter @antadmin/ui storybook      # Storybook cho UI
 pnpm --filter docs dev                 # VitePress docs
-pnpm --filter playground dev           # app test layer
+pnpm turbo run dev --filter=playground # app test layer (qua turbo → tự build package phụ thuộc trước)
 pnpm changeset                         # BẮT BUỘC khi đổi package (major = breaking)
 pnpm --filter @antadmin/ai eval           # eval prompt library (cần AI_GATEWAY_URL/KEY)
 ```
@@ -52,6 +52,9 @@ phải kèm test, không là fail CI. Đổi prompt trong `@antadmin/ai` → tă
   cookie chỉ giữ token (giới hạn 4KB) — không nhét thêm profile vào cookie.
 - **Public npm**: consumer cài 9 package framework từ npmjs mặc định, không thêm scope registry hay token.
   MCP không phải dependency public.
+- **Chạy playground khi package chưa build** (vd sau `pnpm clean`) → `[TSCONFIG_ERROR] Failed to load tsconfig
+  '../packages/nuxt-layer-base/.nuxt/tsconfig.json'`: layer chưa `nuxi prepare`, các package thiếu `dist`. Chạy dev
+  qua turbo (task `dev` có `^build`), đừng `pnpm --filter playground dev`; server đang lỗi phải restart (Vite cache lỗi tsconfig).
 
 ## Release
 
