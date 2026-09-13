@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, shallowRef, toRaw, useAttrs, useSlots, watch } from 'vue'
 import type { ComponentPublicInstance, StyleValue } from 'vue'
-import { Badge, Checkbox, Input, Popover, Table, Tooltip } from 'ant-design-vue'
+import { Badge, Input, Table, Tooltip } from 'ant-design-vue'
 import type { TableColumnsType, TablePaginationConfig } from 'ant-design-vue'
+import type { FilterValue, SorterResult, TableCurrentDataSource } from 'ant-design-vue/es/table/interface'
 import {
   IconDownload,
   IconFilter,
@@ -11,25 +12,40 @@ import {
   IconSearch,
   IconSettings,
 } from '@tabler/icons-vue'
+import { clearTableSettings, getTableSettings, setTableSettings } from '@antadmin/utils'
+import type { TableSettings, TableSort } from '@antadmin/utils'
 import CButton from './CButton.vue'
 import CCard from './CCard.vue'
 import CTag from './CTag.vue'
 import CTableFilterDrawer from '../internal/CTableFilterDrawer.vue'
+import CTableSettingsDrawer from '../internal/CTableSettingsDrawer.vue'
+import {
+  canControlSort,
+  defaultSortOf,
+  displayColumnsOf,
+  isDefaultTableSettings,
+  isSameTableSort,
+  mergeSortOrder,
+  mergeTableSettings,
+  settingColumnsOf,
+  sortColumnOf,
+  toTableSort,
+} from '../internal/column-settings'
 import { activeFiltersOf } from '../internal/filter'
 import type { TableFilterField, TableFilterValues } from '../internal/filter'
 import {
   camelizeKeys,
-  columnKeyOf,
   columnLabelOf,
+  hasColumnKey,
   isPlainObject,
   mergePagination,
   mergeRowClassName,
-  visibleColumns,
 } from '../internal/table'
 
 // Bảng trang danh sách chuẩn AntAdmin: khung card (tiêu đề + toolbar Thêm mới, Tìm kiếm, Lọc,
-// Xuất, Tải lại, Cài đặt cột), header bảng nền primary, phân trang "Tổng số dòng".
+// Xuất, Tải lại, Thiết lập), header bảng nền primary, phân trang "Tổng số dòng".
 // Có filterFields: nút Lọc mở drawer lọc dựng sẵn, thanh điều kiện lọc hiện ngay trên bảng.
+// Nút Thiết lập mở drawer đổi thứ tự/ẩn cột + sắp xếp mặc định; có settingsKey thì nhớ vào localStorage.
 // Cột do trang định nghĩa; mọi prop/slot/sự kiện khác của a-table (columns, dataSource, loading,
 // pagination, bodyCell, @change…) được forward nguyên vẹn — bind thẳng với useTable như trước.
 defineOptions({ name: 'CTable', inheritAttrs: false })
@@ -70,10 +86,16 @@ const props = withDefaults(defineProps<{
   showExport?: boolean
   /** Nút tròn tải lại (sự kiện reload); icon xoay khi bảng loading. */
   showReload?: boolean
-  /** Nút tròn cài đặt cột: popover ẩn/hiện cột. */
+  /** Nút tròn thiết lập: drawer đổi thứ tự/ẩn cột và đặt sắp xếp mặc định (cột có `sorter`). */
   showColumnSetting?: boolean
-  /** v-model:hiddenColumns — key các cột đang ẩn (key, không có thì dataIndex). */
-  hiddenColumns?: string[]
+  /**
+   * Khoá lưu thiết lập vào localStorage (`antadmin:table:<settingsKey>`) — mỗi bảng một khoá, vd `orders`,
+   * `orders:items`. Không truyền thì thiết lập chỉ giữ trong phiên. Truyền cùng khoá cho `useTable({ settingsKey })`
+   * để lần tải đầu đã theo sắp xếp mặc định.
+   */
+  settingsKey?: string
+  /** v-model:settings — thiết lập đang áp dụng; bind khi trang tự lưu nơi khác (vd server), không bind thì CTable tự giữ. */
+  settings?: TableSettings
 }>(), {
   title: '',
   collapsible: false,
@@ -94,13 +116,21 @@ const props = withDefaults(defineProps<{
   showExport: false,
   showReload: false,
   showColumnSetting: false,
-  hiddenColumns: undefined,
+  settingsKey: undefined,
+  settings: undefined,
 })
 
 const emit = defineEmits<{
   'update:searchValue': [value: string]
-  'update:hiddenColumns': [keys: string[]]
   'update:filterValues': [values: TableFilterValues]
+  'update:settings': [settings: TableSettings]
+  /** Sự kiện change của a-table; CTable cũng phát (action `sort`) khi lưu sắp xếp mặc định mới. */
+  change: [
+    pagination: TablePaginationConfig,
+    filters: Record<string, FilterValue | null>,
+    sorter: SorterResult | SorterResult[],
+    extra: TableCurrentDataSource,
+  ]
   search: [value: string]
   create: []
   filter: []
@@ -149,44 +179,120 @@ const mergedPagination = computed(
   () => mergePagination(normalizedAttrs.value.pagination) as false | TablePaginationConfig,
 )
 
-// ── Ẩn/hiện cột (v-model:hiddenColumns, không bind thì tự giữ state) ─────────────────────
+// ── Thiết lập: thứ tự/ẩn cột + sắp xếp mặc định (v-model:settings → localStorage theo settingsKey → gốc) ──
 const sourceColumns = computed(() => {
   const { columns } = normalizedAttrs.value
   return Array.isArray(columns) ? (columns as TableColumnsType) : undefined
 })
-const hiddenKeys = ref<string[]>([...(props.hiddenColumns ?? [])])
+const settingColumns = computed(() => settingColumnsOf(sourceColumns.value ?? []))
+
+function loadSettings(): TableSettings | null {
+  if (props.settings !== undefined) return props.settings
+  return props.settingsKey ? getTableSettings(props.settingsKey) : null
+}
+// shallowRef: thiết lập chỉ thay nguyên object (Lưu lại, prop hoặc khoá đổi).
+const rawSettings = shallowRef<TableSettings | null>(loadSettings())
+watch([() => props.settings, () => props.settingsKey], () => {
+  rawSettings.value = loadSettings()
+})
+// Luôn hợp nhất với columns hiện tại: thiết lập lưu từ bộ cột cũ vẫn áp dụng đúng.
+const appliedSettings = computed(() => mergeTableSettings(settingColumns.value, rawSettings.value))
+
+// Thiết lập lưu theo key cột: cột thiếu key/dataIndex dùng key theo vị trí, thêm/bớt cột là áp nhầm sang cột khác —
+// dùng sai API, báo ngay khi dựng bảng.
 watch(
-  () => props.hiddenColumns,
-  (keys) => {
-    hiddenKeys.value = [...(keys ?? [])]
+  [() => props.settingsKey, () => props.settings, sourceColumns],
+  ([settingsKey, settings, columns = []]) => {
+    if (settingsKey === undefined && settings === undefined) return
+    const position = columns.findIndex((column, i) => columnLabelOf(column, i) !== undefined && !hasColumnKey(column))
+    const column = columns[position]
+    if (column) {
+      throw new Error(
+        `[@antadmin/ui] CTable: cột "${columnLabelOf(column, position)}" cần \`key\` hoặc \`dataIndex\` để lưu thiết lập (settingsKey/settings).`,
+      )
+    }
+  },
+  { immediate: true },
+)
+
+// CTable điều khiển sortOrder để chỉ báo sắp xếp khớp sắp xếp mặc định — chỉ khi dùng thiết lập và trang chưa tự
+// điều khiển; còn lại a-table tự giữ trạng thái như cũ.
+const sortControlled = computed(
+  () =>
+    (props.showColumnSetting || props.settingsKey !== undefined || props.settings !== undefined) &&
+    canControlSort(sourceColumns.value ?? []),
+)
+// Sắp xếp đang áp dụng: khởi tạo từ sắp xếp mặc định (không có thì defaultSortOrder của cột), đổi theo @change khi
+// bấm tiêu đề cột và khi sắp xếp mặc định đổi.
+const currentSort = shallowRef<TableSort | null>(
+  appliedSettings.value.defaultSort ?? defaultSortOf(sourceColumns.value ?? []),
+)
+watch(
+  () => appliedSettings.value.defaultSort,
+  (next, previous) => {
+    if (!isSameTableSort(next, previous)) currentSort.value = next
   },
 )
 
 // Không có columns (khai báo cột bằng <a-table-column>) → undefined để antdv tự lo.
-const displayColumns = computed(() =>
-  sourceColumns.value ? visibleColumns(sourceColumns.value, hiddenKeys.value) : undefined,
-)
-const settingColumns = computed(() =>
-  (sourceColumns.value ?? []).flatMap((column, i) => {
-    const label = columnLabelOf(column, i)
-    return label === undefined ? [] : [{ key: columnKeyOf(column, i), label }]
-  }),
-)
-const visibleColumnCount = computed(
-  () => settingColumns.value.filter((column) => !hiddenKeys.value.includes(column.key)).length,
-)
+const displayColumns = computed(() => {
+  const columns = sourceColumns.value
+  if (!columns) return undefined
+  const arranged = displayColumnsOf(columns, appliedSettings.value)
+  return sortControlled.value ? mergeSortOrder(arranged, currentSort.value) : arranged
+})
 
-function isColumnHidden(key: string): boolean {
-  return hiddenKeys.value.includes(key)
+const settingsOpen = ref(false)
+const settingsButtonRef = ref<HTMLButtonElement | null>(null)
+// Filter cột a-table phát ở lần change gần nhất — gửi kèm khi CTable tự phát change.
+let columnFilters: Record<string, FilterValue | null> = {}
+
+function onTableChange(
+  pagination: TablePaginationConfig,
+  filters: Record<string, FilterValue | null>,
+  sorter: SorterResult | SorterResult[],
+  extra: TableCurrentDataSource,
+) {
+  columnFilters = filters
+  currentSort.value = toTableSort(sorter)
+  emit('change', pagination, filters, sorter, extra)
 }
-function updateHiddenColumns(keys: string[]) {
-  hiddenKeys.value = keys
-  emit('update:hiddenColumns', keys)
+
+// Sắp xếp mặc định mới áp dụng ngay: phát change như khi bấm tiêu đề cột (về trang 1) để useTable.onChange tải lại.
+function emitSortChange(sort: TableSort | null) {
+  currentSort.value = sort
+  const column = sort ? sortColumnOf(sourceColumns.value ?? [], sort) : undefined
+  const sorter: SorterResult =
+    sort && column
+      ? { column, columnKey: column.key, field: 'dataIndex' in column ? column.dataIndex : sort.field, order: sort.order }
+      : {}
+  const pagination = mergedPagination.value === false ? {} : { ...mergedPagination.value, current: 1 }
+  const { dataSource } = normalizedAttrs.value
+  emit('change', pagination, columnFilters, sorter, {
+    action: 'sort',
+    currentDataSource: Array.isArray(dataSource) ? [...dataSource] : [],
+  })
 }
-function setColumnVisible(key: string, visible: boolean) {
-  const others = hiddenKeys.value.filter((k) => k !== key)
-  updateHiddenColumns(visible ? others : [...others, key])
+
+function saveSettings(next: TableSettings) {
+  const settings = mergeTableSettings(settingColumns.value, next)
+  const sortChanged = !isSameTableSort(appliedSettings.value.defaultSort, settings.defaultSort)
+  if (props.settingsKey) {
+    // Trùng cấu hình gốc thì xoá hẳn — cột thêm sau này hiện đúng vị trí khai báo.
+    if (isDefaultTableSettings(settings)) clearTableSettings(props.settingsKey)
+    else setTableSettings(props.settingsKey, settings)
+  }
+  rawSettings.value = settings
+  emit('update:settings', settings)
+  if (sortChanged) emitSortChange(settings.defaultSort)
 }
+
+// antdv Drawer không trả focus khi đóng → đưa về nút Thiết lập.
+watch(settingsOpen, async (open) => {
+  if (open) return
+  await nextTick()
+  settingsButtonRef.value?.focus()
+})
 
 // ── Toolbar ──────────────────────────────────────────────────────────────────────────────
 const searchText = ref(props.searchValue)
@@ -433,53 +539,29 @@ function stopInCollapse(event: Event) {
             />
           </button>
         </Tooltip>
-        <Popover
-          v-if="showColumnSetting"
-          trigger="click"
-          placement="bottomRight"
+        <Tooltip
+          v-if="showColumnSetting && settingColumns.length"
+          title="Thiết lập"
         >
-          <template #title>
-            <div class="c-table__settings-head">
-              <span>Hiển thị cột</span>
-              <button
-                type="button"
-                class="c-table__settings-reset"
-                :disabled="hiddenKeys.length === 0"
-                @click="updateHiddenColumns([])"
-              >
-                Đặt lại
-              </button>
-            </div>
-          </template>
-          <template #content>
-            <ul class="c-table__settings">
-              <li
-                v-for="column in settingColumns"
-                :key="column.key"
-              >
-                <Checkbox
-                  :checked="!isColumnHidden(column.key)"
-                  :disabled="!isColumnHidden(column.key) && visibleColumnCount <= 1"
-                  @change="setColumnVisible(column.key, $event.target.checked)"
-                >
-                  {{ column.label }}
-                </Checkbox>
-              </li>
-            </ul>
-          </template>
-          <!-- span làm neo nhận click cho Popover (Tooltip lồng trực tiếp không nhận được). -->
-          <span class="c-table__anchor">
-            <Tooltip title="Cài đặt cột">
-              <button
-                type="button"
-                class="c-table__icon-btn"
-                aria-label="Cài đặt cột"
-              >
-                <IconSettings :size="18" />
-              </button>
-            </Tooltip>
-          </span>
-        </Popover>
+          <button
+            ref="settingsButtonRef"
+            type="button"
+            class="c-table__icon-btn"
+            aria-label="Thiết lập bảng"
+            aria-haspopup="dialog"
+            @click="settingsOpen = true"
+          >
+            <IconSettings :size="18" />
+          </button>
+        </Tooltip>
+        <!-- Drawer teleport ra body nên click/Enter bên trong không nổi lên toolbar. -->
+        <CTableSettingsDrawer
+          v-if="showColumnSetting && settingColumns.length"
+          v-model:open="settingsOpen"
+          :columns="settingColumns"
+          :settings="appliedSettings"
+          @save="saveSettings"
+        />
       </div>
     </template>
 
@@ -527,6 +609,7 @@ function stopInCollapse(event: Event) {
       v-bind="tableProps"
       :columns="displayColumns"
       :pagination="mergedPagination"
+      @change="onTableChange"
     >
       <template
         v-for="name in forwardedSlotNames()"
@@ -609,8 +692,16 @@ function stopInCollapse(event: Event) {
   font-weight: 400;
   text-overflow: ellipsis;
 }
+/* Nút chữ dạng link. */
 .c-table__filters-clear {
   margin-inline-start: auto;
+  padding: 0;
+  font: inherit;
+  font-weight: 500;
+  color: var(--antadmin-color-link);
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 /* Dòng xen kẽ — nhường nền cho hover/selected của antdv. */
@@ -637,11 +728,8 @@ function stopInCollapse(event: Event) {
   margin-inline-end: 6px;
   vertical-align: -3px;
 }
-.c-table__anchor {
-  display: inline-flex;
-}
 
-/* Nút tròn viền (xuất / tải lại / cài đặt cột). */
+/* Nút tròn viền (xuất / tải lại / thiết lập). */
 .c-table__icon-btn {
   display: inline-flex;
   align-items: center;
@@ -662,7 +750,6 @@ function stopInCollapse(event: Event) {
   border-color: var(--antadmin-color-primary);
 }
 .c-table__icon-btn:focus-visible,
-.c-table__settings-reset:focus-visible,
 .c-table__filters-clear:focus-visible {
   outline: 2px solid var(--antadmin-color-primary);
   outline-offset: 2px;
@@ -675,38 +762,5 @@ function stopInCollapse(event: Event) {
   to {
     transform: rotate(360deg);
   }
-}
-
-/* Popover cài đặt cột. */
-.c-table__settings-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.c-table__settings-reset,
-.c-table__filters-clear {
-  padding: 0;
-  font: inherit;
-  font-weight: 500;
-  color: var(--antadmin-color-link);
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-.c-table__settings-reset:disabled {
-  color: var(--antadmin-color-text-subtle);
-  cursor: not-allowed;
-}
-.c-table__settings {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 180px;
-  max-height: 320px;
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  list-style: none;
 }
 </style>

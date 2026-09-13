@@ -1,11 +1,18 @@
-// Tiện ích thuần cho CTable: chuẩn hoá attrs, định danh/ẩn cột, gộp phân trang chuẩn, lớp
-// dòng xen kẽ. Tách khỏi SFC để test trực tiếp; không phụ thuộc ant-design-vue.
+// Tiện ích thuần cho CTable: chuẩn hoá attrs, định danh cột, gộp phân trang chuẩn, lớp dòng xen kẽ.
+// Tách khỏi SFC để test trực tiếp; không phụ thuộc ant-design-vue.
 
 /** Phần cấu hình cột mà CTable cần đọc (tương thích ColumnType của antdv). */
 export interface TableColumnLike {
   key?: string | number
   dataIndex?: string | number | readonly (string | number)[]
   title?: unknown
+  /** `'left'` / `true` / `'right'` — cột cố định. */
+  fixed?: unknown
+  sorter?: unknown
+  sortOrder?: unknown
+  defaultSortOrder?: unknown
+  /** Cột nhóm (header nhiều tầng). */
+  children?: unknown
 }
 
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -21,21 +28,27 @@ export function camelizeKeys(record: Record<string, unknown>): Record<string, un
   return out
 }
 
-/** Key định danh cột: `key` → `dataIndex` (mảng nối bằng '.') → vị trí trong mảng columns. */
-export function columnKeyOf(column: TableColumnLike, position: number): string {
+/** Key do trang khai báo: `key` → `dataIndex` (mảng nối bằng '.'); không có → undefined. */
+function declaredKeyOf(column: TableColumnLike): string | undefined {
   if (column.key !== undefined && column.key !== '') return String(column.key)
   const { dataIndex } = column
-  if (Array.isArray(dataIndex)) {
-    if (dataIndex.length) return dataIndex.join('.')
-  } else if (dataIndex !== undefined && dataIndex !== '') {
-    return String(dataIndex)
-  }
-  return `__col_${position}`
+  if (Array.isArray(dataIndex)) return dataIndex.length ? dataIndex.join('.') : undefined
+  return dataIndex !== undefined && dataIndex !== '' ? String(dataIndex) : undefined
+}
+
+/** Key định danh cột: `key` → `dataIndex` (mảng nối bằng '.') → vị trí trong mảng columns. */
+export function columnKeyOf(column: TableColumnLike, position: number): string {
+  return declaredKeyOf(column) ?? `__col_${position}`
+}
+
+/** Cột có `key`/`dataIndex` — key không phụ thuộc vị trí nên lưu thiết lập theo key được. */
+export function hasColumnKey(column: TableColumnLike): boolean {
+  return declaredKeyOf(column) !== undefined
 }
 
 /**
- * Nhãn cột trong popover cài đặt: title dạng chữ/số, title tuỳ biến (VNode/hàm) thì dùng key.
- * Title rỗng `''` là cột tiện ích (vd menu ⋮) → undefined: không đưa vào danh sách ẩn/hiện.
+ * Nhãn cột trong drawer thiết lập: title dạng chữ/số, title tuỳ biến (VNode/hàm) thì dùng key.
+ * Title rỗng `''` là cột tiện ích (vd menu ⋮) → undefined: không cấu hình được, giữ nguyên vị trí.
  */
 export function columnLabelOf(column: TableColumnLike, position: number): string | undefined {
   const { title } = column
@@ -43,16 +56,6 @@ export function columnLabelOf(column: TableColumnLike, position: number): string
   return typeof title === 'string' || typeof title === 'number'
     ? String(title)
     : columnKeyOf(column, position)
-}
-
-/** Bỏ các cột đang ẩn (so theo columnKeyOf, vị trí tính trên mảng gốc). */
-export function visibleColumns<C extends TableColumnLike>(
-  columns: readonly C[],
-  hiddenKeys: readonly string[],
-): C[] {
-  if (!hiddenKeys.length) return [...columns]
-  const hidden = new Set(hiddenKeys)
-  return columns.filter((column, i) => !hidden.has(columnKeyOf(column, i)))
 }
 
 /** Nhãn tổng số dòng mặc định ở chân bảng. */

@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/vue3'
 import { computed, ref } from 'vue'
 import { Dropdown, Menu, MenuItem, RadioButton, RadioGroup } from 'ant-design-vue'
 import { IconCircleCheck, IconCircleX, IconDotsVertical } from '@tabler/icons-vue'
+import { getTableSettings } from '@antadmin/utils'
+import type { TableSort } from '@antadmin/utils'
 import CTable from './CTable.vue'
 import type { TableFilterField, TableFilterValues } from '../internal/filter'
 
@@ -91,9 +93,33 @@ const VEHICLE_FILTER_FIELDS: TableFilterField[] = [
 
 type Vehicle = (typeof VEHICLES)[number]
 
+interface Order {
+  id: number
+  code: string
+  customer: string
+  amount: number
+}
+
+interface OrderItem {
+  id: number
+  product: string
+  quantity: number
+  note: string
+}
+
+// Mỗi bảng một settingsKey — thiết lập (thứ tự/ẩn cột, sắp xếp mặc định) nhớ trong localStorage.
+const VEHICLE_TABLE_KEY = 'story:vehicles'
+
 /** `DD/MM/YYYY` của dữ liệu demo → `YYYY-MM-DD` để so với giá trị bộ lọc ngày. */
 function toIsoDate(date: string): string {
   return date.split('/').reverse().join('-')
+}
+
+// Demo sắp xếp phía client; trang thật gửi query.sortField/sortOrder lên backend (useTable.onChange).
+function compareVehicles(a: Vehicle, b: Vehicle, field: string): number {
+  if (field === 'updatedAt') return toIsoDate(a.updatedAt).localeCompare(toIsoDate(b.updatedAt))
+  if (field === 'code' || field === 'name' || field === 'brand') return a[field].localeCompare(b[field], 'vi')
+  return 0
 }
 
 // Demo lọc phía client; trang thật gửi filterValues lên backend (useTable.onFilter).
@@ -133,14 +159,20 @@ export const ListPage: Story = {
       const keyword = ref('')
       const appliedKeyword = ref('')
       const filters = ref<TableFilterValues>({ status: 1 })
+      // Như useTable({ settingsKey }): sắp xếp mặc định đã lưu có hiệu lực ngay lần hiển thị đầu.
+      const sort = ref<TableSort | null>(getTableSettings(VEHICLE_TABLE_KEY)?.defaultSort ?? null)
       const loading = ref(false)
       const lastEvent = ref('—')
 
       const rows = computed(() => {
         const q = appliedKeyword.value.trim().toLowerCase()
-        return VEHICLES.filter(
+        const list = VEHICLES.filter(
           (v) => (!q || `${v.code} ${v.name}`.toLowerCase().includes(q)) && matchesFilters(v, filters.value),
         )
+        const current = sort.value
+        if (!current) return list
+        const direction = current.order === 'descend' ? -1 : 1
+        return list.sort((a, b) => compareVehicles(a, b, current.field) * direction)
       })
       const pagination = computed(() => ({
         current: page.value,
@@ -156,19 +188,26 @@ export const ListPage: Story = {
           align: 'center',
           customRender: ({ index }: { index: number }) => (page.value - 1) * pageSize.value + index + 1,
         },
-        { title: 'Mã xe', dataIndex: 'code', key: 'code', width: 120 },
-        { title: 'Tên xe', dataIndex: 'name', key: 'name', ellipsis: true },
-        { title: 'Hãng xe', dataIndex: 'brand', key: 'brand', width: 130 },
+        { title: 'Mã xe', dataIndex: 'code', key: 'code', width: 120, sorter: true },
+        { title: 'Tên xe', dataIndex: 'name', key: 'name', ellipsis: true, sorter: true },
+        { title: 'Hãng xe', dataIndex: 'brand', key: 'brand', width: 130, sorter: true },
         { title: 'Dòng xe', dataIndex: 'line', key: 'line', width: 110 },
         { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 110, align: 'center' },
         { title: 'Người cập nhật', dataIndex: 'updatedBy', key: 'updatedBy', width: 150 },
-        { title: 'Ngày cập nhật', dataIndex: 'updatedAt', key: 'updatedAt', width: 140, align: 'center' },
+        { title: 'Ngày cập nhật', dataIndex: 'updatedAt', key: 'updatedAt', width: 150, align: 'center', sorter: true },
         { title: '', key: 'actions', width: 56, align: 'center' },
       ]
 
-      function onChange(p: { current?: number; pageSize?: number }) {
+      // Cả change của a-table (bấm tiêu đề cột) lẫn change CTable phát khi lưu sắp xếp mặc định mới.
+      function onChange(
+        p: { current?: number; pageSize?: number },
+        _filters: unknown,
+        sorter: { field?: unknown; order?: 'ascend' | 'descend' | null },
+      ) {
         page.value = p.current ?? 1
         pageSize.value = p.pageSize ?? pageSize.value
+        sort.value = typeof sorter.field === 'string' && sorter.order ? { field: sorter.field, order: sorter.order } : null
+        lastEvent.value = `change(sort: ${sort.value ? `${sort.value.field} ${sort.value.order}` : 'không'})`
       }
       function onSearch(value: string) {
         appliedKeyword.value = value
@@ -190,6 +229,7 @@ export const ListPage: Story = {
       }
 
       return {
+        settingsKey: VEHICLE_TABLE_KEY,
         columns,
         rows,
         pagination,
@@ -210,6 +250,7 @@ export const ListPage: Story = {
         <CTable
           v-model:search-value="keyword"
           title="Danh sách phiên bản xe"
+          :settings-key="settingsKey"
           row-key="id"
           :columns="columns"
           :data-source="rows"
@@ -350,6 +391,73 @@ export const FilterValues: Story = {
           show-filter
         />
         <pre style="margin:8px 0 0;color:var(--antadmin-color-text-muted)">filterValues = {{ JSON.stringify(filters) }}</pre>
+      </div>
+    `,
+  }),
+}
+
+export const MultipleTables: Story = {
+  name: 'Thiết lập — nhiều bảng trên một trang',
+  render: () => ({
+    components: { CTable },
+    setup() {
+      // Dữ liệu demo sắp xếp phía client (sorter là hàm so sánh); cột do trang khai báo.
+      const orderColumns = [
+        { title: 'Mã đơn', dataIndex: 'code', key: 'code', sorter: (a: Order, b: Order) => a.code.localeCompare(b.code) },
+        { title: 'Khách hàng', dataIndex: 'customer', key: 'customer' },
+        { title: 'Giá trị', dataIndex: 'amount', key: 'amount', align: 'right', sorter: (a: Order, b: Order) => a.amount - b.amount },
+      ]
+      const itemColumns = [
+        { title: 'Sản phẩm', dataIndex: 'product', key: 'product' },
+        { title: 'Số lượng', dataIndex: 'quantity', key: 'quantity', align: 'right', sorter: (a: OrderItem, b: OrderItem) => a.quantity - b.quantity },
+        { title: 'Ghi chú', dataIndex: 'note', key: 'note' },
+      ]
+      const orders: Order[] = Array.from({ length: 6 }, (_, i) => ({
+        id: i + 1,
+        code: `DH-${String(6 - i).padStart(4, '0')}`,
+        customer: ['Công ty An Bình', 'Tập đoàn Bắc Sơn', 'Cửa hàng Cường Thịnh'][i % 3] ?? '',
+        amount: ((i * 7) % 6 + 1) * 1_250_000,
+      }))
+      const items: OrderItem[] = ['Lốp xe', 'Dầu nhớt', 'Má phanh', 'Ắc quy'].map((product, i) => ({
+        id: i + 1,
+        product,
+        quantity: ((i * 5) % 4) + 1,
+        note: i % 2 ? 'Giao gấp' : '',
+      }))
+
+      // Mỗi bảng một khoá → thiết lập lưu riêng; hiển thị lại nội dung localStorage sau mỗi lần Lưu lại.
+      const stored = ref(readStored())
+      function readStored() {
+        return { 'story:orders': getTableSettings('story:orders'), 'story:orders:items': getTableSettings('story:orders:items') }
+      }
+      function refresh() {
+        stored.value = readStored()
+      }
+      return { orderColumns, itemColumns, orders, items, stored, refresh }
+    },
+    template: `
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <CTable
+          title="Đơn hàng"
+          settings-key="story:orders"
+          show-column-setting
+          row-key="id"
+          :columns="orderColumns"
+          :data-source="orders"
+          :pagination="false"
+          @update:settings="refresh"
+        />
+        <CTable
+          title="Dòng hàng của đơn"
+          settings-key="story:orders:items"
+          show-column-setting
+          row-key="id"
+          :columns="itemColumns"
+          :data-source="items"
+          :pagination="false"
+          @update:settings="refresh"
+        />
+        <pre style="margin:0;color:var(--antadmin-color-text-muted)">localStorage = {{ JSON.stringify(stored, null, 2) }}</pre>
       </div>
     `,
   }),

@@ -1,6 +1,6 @@
 import { computed, reactive, ref, shallowRef } from 'vue'
 import type { Ref } from 'vue'
-import { toAppError } from '@antadmin/utils'
+import { getTableSettings, toAppError } from '@antadmin/utils'
 import type { Paginated } from '@antadmin/utils'
 
 export interface TableQuery {
@@ -19,6 +19,11 @@ export interface UseTableOptions {
   immediate?: boolean
   /** Bộ lọc form ban đầu (vd mặc định lọc theo trạng thái) — có hiệu lực ngay từ lần load đầu. */
   filters?: Record<string, unknown>
+  /**
+   * Khoá thiết lập của CTable (`settings-key`, cùng giá trị) — đọc sắp xếp mặc định người dùng đã lưu để lần load
+   * đầu đúng thứ tự, không phải tải lại khi bảng dựng xong.
+   */
+  settingsKey?: string
 }
 
 // Cấu trúc tham số của sự kiện @change từ a-table/CTable.
@@ -27,7 +32,8 @@ interface AntdPagination {
   pageSize?: number
 }
 interface AntdSorter {
-  field?: string
+  /** dataIndex của cột — mảng khi dataIndex lồng (`['owner', 'name']`). */
+  field?: string | number | readonly (string | number)[]
   order?: 'ascend' | 'descend' | null
 }
 
@@ -41,9 +47,20 @@ function mergeFilters(
 }
 
 /**
+ * Sắp xếp gửi fetcher từ sorter của a-table: bỏ sắp xếp (không có order) → không gửi field; sắp xếp nhiều cột
+ * (mảng) → lấy cột đầu vì TableQuery chỉ giữ một cột; dataIndex lồng nối bằng '.'.
+ */
+function toQuerySort(sorter: AntdSorter | AntdSorter[] | undefined): Pick<TableQuery, 'sortField' | 'sortOrder'> {
+  const { field, order } = (Array.isArray(sorter) ? sorter[0] : sorter) ?? {}
+  if (!order || field === undefined) return { sortField: undefined, sortOrder: undefined }
+  return { sortField: Array.isArray(field) ? field.join('.') : String(field), sortOrder: order }
+}
+
+/**
  * Quản lý state phân trang/sắp xếp/lọc cho CTable, gọi dữ liệu qua fetcher
  * (thường tạo từ useApi). Trả về props sẵn sàng bind vào CTable: `pagination` + `onChange`,
- * bộ lọc dựng sẵn `filterValues` + `onFilter` (gộp với filter cột vào `query.filters`).
+ * bộ lọc dựng sẵn `filterValues` + `onFilter` (gộp với filter cột vào `query.filters`);
+ * `options.settingsKey` để lần load đầu theo sắp xếp mặc định đã lưu trong thiết lập của CTable.
  */
 export function useTable<T>(fetcher: TableFetcher<T>, options: UseTableOptions = {}) {
   const dataSource = ref([]) as Ref<T[]>
@@ -56,9 +73,12 @@ export function useTable<T>(fetcher: TableFetcher<T>, options: UseTableOptions =
   const formFilters = shallowRef<Record<string, unknown>>({ ...options.filters })
   let columnFilters: Record<string, unknown> | undefined
 
+  // Sắp xếp mặc định người dùng lưu ở CTable (cùng settingsKey) có hiệu lực ngay từ lần load đầu.
+  const savedSort = options.settingsKey ? getTableSettings(options.settingsKey)?.defaultSort : undefined
   const query = reactive<TableQuery>({
     page: 1,
     pageSize: options.pageSize ?? 20,
+    ...(savedSort ? { sortField: savedSort.field, sortOrder: savedSort.order } : {}),
     filters: mergeFilters(formFilters.value, columnFilters),
   })
   const filterValues = computed(() => formFilters.value)
@@ -86,18 +106,19 @@ export function useTable<T>(fetcher: TableFetcher<T>, options: UseTableOptions =
     }
   }
 
-  /** Bind trực tiếp vào `@change` của CTable. */
+  /** Bind trực tiếp vào `@change` của CTable (kể cả change CTable phát khi lưu sắp xếp mặc định mới). */
   function onChange(
     pag: AntdPagination,
     filters?: Record<string, unknown>,
-    sorter?: AntdSorter,
+    sorter?: AntdSorter | AntdSorter[],
   ): Promise<void> {
     query.page = pag.current ?? query.page
     query.pageSize = pag.pageSize ?? query.pageSize
     columnFilters = filters
     query.filters = mergeFilters(formFilters.value, columnFilters)
-    query.sortField = sorter?.field
-    query.sortOrder = sorter?.order ?? undefined
+    const sort = toQuerySort(sorter)
+    query.sortField = sort.sortField
+    query.sortOrder = sort.sortOrder
     return load()
   }
 

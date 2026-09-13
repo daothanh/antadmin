@@ -40,10 +40,13 @@ const tagLabel: Record<string, string> = {
   rejected: 'Từ chối',
 }
 
+// Thiết lập bảng (thứ tự/ẩn cột, sắp xếp mặc định) nhớ theo khoá này — CTable và useTable dùng chung.
+const ORDERS_TABLE_KEY = 'ui-kit:orders'
+
 const columns = [
-  { title: 'Mã', dataIndex: 'code', key: 'code' },
-  { title: 'Khách hàng', dataIndex: 'customer', key: 'customer' },
-  { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'createdAt' },
+  { title: 'Mã', dataIndex: 'code', key: 'code', sorter: true },
+  { title: 'Khách hàng', dataIndex: 'customer', key: 'customer', sorter: true },
+  { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'createdAt', sorter: true },
   { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
 ]
 const filterFields: TableFilterField[] = [
@@ -58,8 +61,16 @@ const filterFields: TableFilterField[] = [
   { key: 'createdAt', label: 'Ngày tạo', type: 'dateRange' },
 ]
 
-// Fetcher demo lọc tại chỗ (chạy offline); trang thật gọi useApi và backend nhận query.filters.
-async function fetchOrders(query: { page: number; pageSize: number; filters?: Record<string, unknown> }) {
+interface OrdersQuery {
+  page: number
+  pageSize: number
+  sortField?: string
+  sortOrder?: 'ascend' | 'descend'
+  filters?: Record<string, unknown>
+}
+
+// Fetcher demo lọc + sắp xếp tại chỗ (chạy offline); trang thật gọi useApi, backend nhận query.filters/sortField.
+async function fetchOrders(query: OrdersQuery) {
   const { customer, status, createdAt } = query.filters ?? {}
   const items = ORDERS.filter((order) => {
     if (typeof customer === 'string' && !order.customer.toLowerCase().includes(customer.toLowerCase())) {
@@ -73,6 +84,11 @@ async function fetchOrders(query: { page: number; pageSize: number; filters?: Re
     }
     return true
   })
+  const { sortField, sortOrder } = query
+  if (sortField === 'code' || sortField === 'customer' || sortField === 'createdAt') {
+    const direction = sortOrder === 'descend' ? -1 : 1
+    items.sort((a, b) => a[sortField].localeCompare(b[sortField], 'vi') * direction)
+  }
   const start = (query.page - 1) * query.pageSize
   return { items: items.slice(start, start + query.pageSize), total: items.length }
 }
@@ -80,6 +96,7 @@ async function fetchOrders(query: { page: number; pageSize: number; filters?: Re
 const { dataSource, loading, pagination, filterValues, onChange, onFilter } = useTable(fetchOrders, {
   pageSize: 5,
   filters: { status: ['pending'] },
+  settingsKey: ORDERS_TABLE_KEY,
 })
 </script>
 
@@ -254,6 +271,7 @@ const { dataSource, loading, pagination, filterValues, onChange, onFilter } = us
       :pagination="pagination"
       :filter-fields="filterFields"
       :filter-values="filterValues"
+      :settings-key="ORDERS_TABLE_KEY"
       row-key="id"
       show-create
       show-search

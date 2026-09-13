@@ -9,7 +9,7 @@ CTable thành khung trang danh sách chuẩn; bật locale vi_VN của antdv cho
 - **@antadmin/ui — `CTable`**: bọc bảng trong khung card (dựa trên `CCard`) có tiêu đề (`title` / slot `#title`) và toolbar
   tuỳ chọn: `show-create` (`@create`), `show-search` + `v-model:searchValue` (`@search` khi Enter hoặc bấm xoá),
   `show-filter` + `filter-count` (chấm đỏ, `@filter`), `show-export` (`@export`), `show-reload` (`@reload`, icon xoay khi
-  loading), `show-column-setting` (popover ẩn/hiện cột, `v-model:hiddenColumns`), slot `#toolbar`; thêm `striped`,
+  loading), `show-column-setting` (nút Thiết lập — xem changeset drawer thiết lập), slot `#toolbar`; thêm `striped`,
   `collapsible`, `defaultOpen`, `borderless`, `type`. Phân trang mặc định "Tổng số dòng N" + chọn số dòng/trang + cỡ
   `default` (ghi đè từng key qua `pagination`, `false` để tắt). Cột vẫn do trang định nghĩa; props/slot/sự kiện `a-table`
   forward nguyên vẹn.

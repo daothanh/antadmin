@@ -16,7 +16,7 @@ không cần import.
 |---|---|---|
 | `CButton` | Nút đa biến thể, gradient thương hiệu | `variant` (`primary`/`secondary`/`outline`/`ghost`/`danger`/`link`/`text`), `size` (`sm`/`md`/`lg`), `block` |
 | `CCard` | Thẻ nội dung, có chế độ thu gọn | `title`, `collapsible`, `defaultOpen`, `borderless`; slot `#title`, `#actions` |
-| `CTable` | Bảng trang danh sách: khung + toolbar + bộ lọc drawer + phân trang chuẩn (xem mục CTable bên dưới) | `title`, `show-create`/`show-search`/`show-filter`/`show-export`/`show-reload`/`show-column-setting`, `filterFields`, `v-model:filterValues`, `filterCount`, `v-model:searchValue`, `v-model:hiddenColumns`, `striped`, `collapsible`; slot `#title`, `#toolbar`, `#filterField`; forward toàn bộ props/slot/sự kiện `a-table` |
+| `CTable` | Bảng trang danh sách: khung + toolbar + bộ lọc drawer + thiết lập cột/sắp xếp mặc định + phân trang chuẩn (xem mục CTable bên dưới) | `title`, `show-create`/`show-search`/`show-filter`/`show-export`/`show-reload`/`show-column-setting`, `filterFields`, `v-model:filterValues`, `filterCount`, `v-model:searchValue`, `settingsKey`, `v-model:settings`, `striped`, `collapsible`; slot `#title`, `#toolbar`, `#filterField`; forward toàn bộ props/slot/sự kiện `a-table` |
 | `CForm` | Form (mặc định `layout="vertical"`) | forward props `a-form` |
 | `CPageHeader` | Tiêu đề trang + breadcrumb | `title`, `subTitle`, `breadcrumb[]`; event `@navigate`; slot `#extra` |
 | `CStatistic` | Thẻ chỉ số KPI | `label`, `value`, `trend`, `accent`; slot `#icon`, `#suffix` |
@@ -62,10 +62,12 @@ import type { TableFilterField } from '@antadmin/ui'
 const api = useApi()
 const { can } = usePermission()
 const keyword = ref('')
+// Khoá thiết lập của bảng — CTable và useTable dùng chung (xem mục "Thiết lập bảng").
+const TABLE_KEY = 'vehicles'
 // openCreate, exportExcel, onAction… là hàm của trang.
 const { dataSource, loading, pagination, query, filterValues, onChange, onFilter, reload } = useTable<Vehicle>(
   (q) => api('/vehicles', { query: { ...q, keyword: keyword.value } }),
-  { pageSize: 25, filters: { status: 1 } }, // bộ lọc mặc định (tuỳ chọn)
+  { pageSize: 25, filters: { status: 1 }, settingsKey: TABLE_KEY }, // bộ lọc mặc định (tuỳ chọn)
 )
 
 // Trường lọc cũng do trang khai báo (như columns) — xem mục "Bộ lọc dựng sẵn" bên dưới.
@@ -80,10 +82,10 @@ const columns = [
   // STT/cột thao tác là cột của trang — tự dựng.
   { title: 'STT', key: 'index', width: 64, align: 'center',
     customRender: ({ index }: { index: number }) => (query.page - 1) * query.pageSize + index + 1 },
-  { title: 'Mã xe', dataIndex: 'code', key: 'code' },
-  { title: 'Tên xe', dataIndex: 'name', key: 'name' },
+  { title: 'Mã xe', dataIndex: 'code', key: 'code', sorter: true }, // sorter → chọn được làm sắp xếp mặc định
+  { title: 'Tên xe', dataIndex: 'name', key: 'name', sorter: true },
   { title: 'Trạng thái', dataIndex: 'status', key: 'status', align: 'center' },
-  { title: '', key: 'actions', width: 56, align: 'center' }, // title rỗng → không có trong cài đặt cột
+  { title: '', key: 'actions', width: 56, align: 'center' }, // title rỗng → không có trong thiết lập, giữ chỗ
 ]
 </script>
 
@@ -91,6 +93,7 @@ const columns = [
   <CTable
     v-model:search-value="keyword"
     title="Danh sách phiên bản xe"
+    :settings-key="TABLE_KEY"
     row-key="id"
     :columns="columns"
     :data-source="dataSource"
@@ -133,7 +136,10 @@ const columns = [
 | slot `#filterField="{ field, values }"` | — | Control cho trường `type: 'custom'` — `v-model:value="values[field.key]"` |
 | `filter-count` | `0` | Chấm đỏ trên nút Lọc khi trang tự làm drawer/panel lọc; có `filter-fields` thì tự đếm, bỏ qua prop này |
 | `show-export`, `show-reload` | `false` | Nút tròn → `@export`, `@reload`; icon tải lại xoay khi `loading` |
-| `show-column-setting`, `v-model:hidden-columns` | `false`, — | Popover ẩn/hiện cột; key cột = `key` → `dataIndex`. Bind v-model nếu muốn lưu lựa chọn (localStorage…) |
+| `show-column-setting` | `false` | Nút tròn Thiết lập → drawer đổi thứ tự/ẩn cột + sắp xếp mặc định (xem bên dưới) |
+| `settings-key` | — | Lưu thiết lập vào `localStorage` (`antadmin:table:<settings-key>`), mỗi bảng một khoá; truyền cùng khoá cho `useTable` |
+| `v-model:settings` | — | Thiết lập đang áp dụng (`TableSettings`) — bind khi tự lưu nơi khác (vd server); có giá trị thì thắng `settings-key` |
+| `@change` | — | Sự kiện `a-table`; CTable cũng phát (action `sort`, về trang 1) khi lưu sắp xếp mặc định mới |
 | slot `#toolbar` | — | Chèn nút riêng vào đầu toolbar |
 | `striped`, `collapsible`, `default-open`, `borderless`, `type` | `false`, `false`, `true`, `false`, `default` | Dòng xen kẽ; khung thu gọn/biến thể như `CCard` |
 
@@ -174,6 +180,68 @@ thẻ — nên khai báo khi giá trị custom là object).
 - `query.filters` là object nên `useApi` gửi dạng JSON trong query string (`filters=%7B…%7D`); backend
   cần dạng khác (vd `status=1&brand=GEELY`) thì chuyển đổi trong fetcher.
 - `CFilterBar` vẫn dùng cho vài control lọc đặt ngang phía trên bảng; nhiều trường → dùng drawer.
+
+### Thiết lập bảng
+
+Bật `show-column-setting` → nút ⚙ mở drawer **Thiết lập** gồm 2 tab:
+
+- **Hiển thị cột** — kéo tay nắm ⋮⋮ (chuột) hoặc nút ↑/↓ (bàn phím, cảm ứng) để đổi thứ tự; công tắc Hiện/Ẩn (luôn còn
+  ít nhất một cột hiện). Cột `title: ''` (cột tiện ích như ⋮) không có trong danh sách và giữ nguyên vị trí; cột `fixed`
+  chỉ đổi thứ tự trong nhóm cố định của nó.
+- **Khác** (chỉ có khi bảng có cột `sorter`) — **Sắp xếp mặc định**: bật/tắt, chọn cột (cột có `sorter` + `dataIndex`
+  dạng chuỗi) và chiều Tăng dần/Giảm dần.
+
+Drawer làm việc trên bản nháp như drawer Lọc: **Lưu lại** mới áp dụng; đóng là bỏ nháp; **Đặt lại** đưa nháp về cấu hình
+gốc (thứ tự theo `columns`, hiện hết, tắt sắp xếp) — bấm Lưu lại để áp dụng và xoá thiết lập đã lưu.
+
+```vue
+<script setup lang="ts">
+const TABLE_KEY = 'vehicles' // mỗi bảng một khoá
+const { dataSource, loading, pagination, onChange } = useTable<Vehicle>(fetcher, { settingsKey: TABLE_KEY })
+const columns = [
+  { title: 'Mã xe', dataIndex: 'code', key: 'code', sorter: true },
+  { title: 'Ngày cập nhật', dataIndex: 'updatedAt', key: 'updatedAt', sorter: true },
+  { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
+]
+</script>
+
+<template>
+  <CTable
+    :settings-key="TABLE_KEY"
+    show-column-setting
+    :columns="columns" :data-source="dataSource" :loading="loading" :pagination="pagination"
+    @change="onChange"
+  />
+</template>
+```
+
+**Lưu trữ và nhiều bảng trên một trang**
+
+- Có `settings-key` → thiết lập lưu ở `localStorage['antadmin:table:<settings-key>']` dạng
+  `{ version: 1, columnOrder, hiddenColumns, defaultSort }`; không truyền → chỉ giữ trong phiên.
+- **Mỗi CTable một khoá**, đặt tường minh theo màn hình/bảng: `orders`, `orders:items`. CTable không tự sinh khoá theo
+  route hay thứ tự bảng (route động và bảng render có điều kiện làm khoá thay đổi) và không kiểm tra trùng khoá lúc chạy
+  — hai bảng cùng khoá sẽ dùng chung thiết lập.
+- Lưu đúng cấu hình gốc → xoá khoá. Dữ liệu hỏng, khác version hoặc storage bị chặn (private mode…) → dùng cấu hình
+  gốc, không báo lỗi.
+- `columns` đổi giữa các bản deploy: key không còn bị bỏ, cột mới chèn ngay sau cột đứng trước nó trong `columns` và mặc
+  định hiện; sắp xếp mặc định trỏ tới cột không còn sắp xếp được thì coi như tắt.
+- Có `settings-key`/`v-model:settings` mà cột cấu hình được thiếu cả `key` lẫn `dataIndex` → lỗi `[@antadmin/ui]` khi
+  dựng bảng (key theo vị trí sẽ áp nhầm thiết lập khi thêm/bớt cột).
+- Thiết lập lưu theo trình duyệt, chưa tách theo người dùng. Muốn lưu lên server: bỏ `settings-key`, bind
+  `v-model:settings`, kiểm tra dữ liệu đọc về bằng `parseTableSettings` của `@antadmin/utils`.
+
+**Sắp xếp mặc định**
+
+- `useTable({ settingsKey })` đọc sắp xếp mặc định cùng khoá → lần tải đầu đã đúng thứ tự, không phải tải hai lần.
+  Quên `settingsKey` ở `useTable` thì bảng vẫn hiện chỉ báo sắp xếp nhưng dữ liệu lần đầu chưa sắp xếp.
+- Lưu sắp xếp mặc định mới (hoặc tắt) → CTable phát `@change` (action `sort`, về trang 1, sorter giống khi bấm tiêu đề
+  cột; tắt → sorter `{}`) → `useTable.onChange` tải lại. Chỉ đổi thứ tự/ẩn cột thì không phát `change`.
+- Khi dùng thiết lập, CTable điều khiển `sortOrder` của các cột `sorter` để chỉ báo khớp sắp xếp đang áp dụng (bấm tiêu
+  đề cột vẫn đổi được, không lưu). Không can thiệp nếu trang tự khai báo `sortOrder`, dùng `sorter.multiple` hoặc có cột
+  nhóm (`children`); `defaultSortOrder` của cột vẫn là sắp xếp ban đầu khi người dùng chưa đặt.
+- Trang tự viết `@change` (không dùng `useTable`): lấy `getTableSettings(key)?.defaultSort` của `@antadmin/utils` cho lần
+  tải đầu.
 
 ## Re-export có kiểm soát (primitive antdv)
 

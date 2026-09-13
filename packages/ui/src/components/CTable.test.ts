@@ -1,10 +1,11 @@
 /* eslint-disable vue/one-component-per-file -- nhiều stub antd trong 1 file test */
 import { h, isProxy, nextTick, reactive } from 'vue'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import type { TableSettings } from '@antadmin/utils'
 import type { TableFilterField } from '../internal/filter'
 
-// Stub primitive antdv thành DOM tối giản để test logic wrapper (header/toolbar, ẩn cột,
+// Stub primitive antdv thành DOM tối giản để test logic wrapper (header/toolbar, thiết lập cột,
 // phân trang, forward slot) mà không kéo render antd nặng. CCard/CButton dùng stub này luôn.
 vi.mock('ant-design-vue', async () => {
   const { Comment, Fragment, defineComponent, h, isVNode } = await import('vue')
@@ -141,34 +142,7 @@ vi.mock('ant-design-vue', async () => {
       h('span', { class: 'tooltip', 'data-title': props.title }, slots.default?.()),
   })
 
-  const Popover = defineComponent({
-    name: 'APopover',
-    setup: (_p, { slots }) => () =>
-      h('div', { class: 'popover' }, [
-        h('div', { class: 'popover-title' }, slots.title?.()),
-        h('div', { class: 'popover-content' }, slots.content?.()),
-        slots.default?.(),
-      ]),
-  })
-
-  const Checkbox = defineComponent({
-    name: 'ACheckbox',
-    props: { checked: Boolean, disabled: Boolean },
-    emits: ['change'],
-    setup: (props, { slots, emit }) => () =>
-      h('label', { class: 'checkbox' }, [
-        h('input', {
-          type: 'checkbox',
-          checked: props.checked,
-          disabled: props.disabled,
-          onChange: (e: Event) =>
-            emit('change', { target: { checked: (e.target as HTMLInputElement).checked } }),
-        }),
-        slots.default?.(),
-      ]),
-  })
-
-  return { Badge, Button, Card, Checkbox, Collapse, CollapsePanel, Input, Popover, Table, Tooltip }
+  return { Badge, Button, Card, Collapse, CollapsePanel, Input, Table, Tooltip }
 })
 
 // Drawer lọc có test riêng — ở đây chỉ cần props vào, sự kiện ra và slot của trường custom.
@@ -201,6 +175,23 @@ vi.mock('../internal/CTableFilterDrawer.vue', async () => {
   }
 })
 
+// Drawer thiết lập có test riêng — ở đây chỉ cần props vào và sự kiện save/update:open ra.
+vi.mock('../internal/CTableSettingsDrawer.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'CTableSettingsDrawer',
+      props: {
+        open: Boolean,
+        columns: { type: Array, default: () => [] },
+        settings: { type: Object, default: undefined },
+      },
+      emits: ['update:open', 'save'],
+      setup: (props) => () => (props.open ? h('aside', { class: 'settings-drawer' }) : null),
+    }),
+  }
+})
+
 import CTable from './CTable.vue'
 
 interface Row {
@@ -222,7 +213,7 @@ const rows: Row[] = [
 ]
 
 type Wrapper = ReturnType<typeof mount>
-type ColumnProp = { key?: string; dataIndex?: string }
+type ColumnProp = { key?: string; dataIndex?: string; sortOrder?: string | null }
 
 function tableOf(w: Wrapper) {
   return w.findComponent({ name: 'ATable' })
@@ -280,10 +271,14 @@ describe('CTable — forward a-table', () => {
     expect(cells[1]!.text()).toBe('28')
   })
 
-  it('listener @change của trang xuống thẳng a-table', () => {
+  it('@change của a-table được chuyển tiếp nguyên tham số tới trang', () => {
     const onChange = vi.fn()
-    const handler = tableOf(mount(CTable, { attrs: { onChange } })).props('onChange')
-    expect(handler).toBe(onChange)
+    const w = mount(CTable, { attrs: { onChange } })
+    const args = [{ current: 2, pageSize: 20 }, { dept: ['kt'] }, {}, { action: 'paginate', currentDataSource: [] }]
+    const tableChange = tableOf(w).props('onChange') as (...params: unknown[]) => void
+    tableChange(...args)
+    expect(onChange).toHaveBeenCalledWith(...args)
+    expect(w.emitted('change')).toEqual([args])
   })
 
   it('không có columns → columns undefined để antdv tự lo (<a-table-column>)', () => {
@@ -373,48 +368,227 @@ describe('CTable — header & toolbar', () => {
   })
 })
 
-describe('CTable — cài đặt cột', () => {
-  function settingsOf(w: Wrapper) {
-    return w.findAll('.c-table__settings label')
-  }
+describe('CTable — thiết lập', () => {
+  // Tên + Tuổi sắp xếp được; Phòng ban không key (dùng dataIndex); cột ⋮ tiện ích.
+  const settingColumns = [
+    { title: 'Tên', dataIndex: 'name', key: 'name', sorter: true },
+    { title: 'Tuổi', dataIndex: 'age', key: 'age', sorter: true },
+    { title: 'Phòng ban', dataIndex: 'dept' },
+    { title: '', key: 'actions' },
+  ]
 
-  it('bỏ chọn cột → ẩn khỏi bảng + emit update:hiddenColumns; không cho ẩn cột cuối cùng', async () => {
-    const w = mount(CTable, {
-      props: { showColumnSetting: true },
-      attrs: { columns: [...columns, { title: '', key: 'actions' }] },
-    })
-    // Cột tiện ích (title rỗng) không có trong danh sách ẩn/hiện.
-    expect(settingsOf(w).map((l) => l.text())).toEqual(['Tên', 'Tuổi', 'Phòng ban'])
-
-    await settingsOf(w)[1]!.find('input').setValue(false)
-    expect(columnKeys(w)).toEqual(['name', 'dept', 'actions'])
-    expect(w.emitted('update:hiddenColumns')?.at(-1)).toEqual([['age']])
-
-    await settingsOf(w)[2]!.find('input').setValue(false)
-    expect(columnKeys(w)).toEqual(['name', 'actions'])
-    expect(settingsOf(w)[0]!.find('input').attributes('disabled')).toBeDefined()
-
-    await settingsOf(w)[1]!.find('input').setValue(true)
-    expect(columnKeys(w)).toEqual(['name', 'age', 'actions'])
-    expect(w.emitted('update:hiddenColumns')?.at(-1)).toEqual([['dept']])
+  afterEach(() => {
+    localStorage.clear()
   })
 
-  it('Đặt lại hiện toàn bộ cột; hiddenColumns controlled đồng bộ theo prop', async () => {
-    const w = mount(CTable, {
-      props: { showColumnSetting: true, hiddenColumns: ['age'] },
-      attrs: { columns },
-    })
-    expect(columnKeys(w)).toEqual(['name', 'dept'])
-    await w.setProps({ hiddenColumns: ['name', 'dept'] })
-    expect(columnKeys(w)).toEqual(['age'])
-    await w.setProps({ hiddenColumns: undefined })
-    expect(columnKeys(w)).toEqual(['name', 'age', 'dept'])
-    expect(buttonByText(w, 'Đặt lại').attributes('disabled')).toBeDefined()
+  function saveToStorage(settingsKey: string, settings: TableSettings) {
+    localStorage.setItem(`antadmin:table:${settingsKey}`, JSON.stringify({ version: 1, ...settings }))
+  }
+  function storedOf(settingsKey: string): unknown {
+    return JSON.parse(localStorage.getItem(`antadmin:table:${settingsKey}`) ?? 'null')
+  }
+  function drawerOf(w: Wrapper) {
+    return w.findComponent({ name: 'CTableSettingsDrawer' })
+  }
+  function settingsButtonOf(w: Wrapper) {
+    return w.find('[aria-label="Thiết lập bảng"]')
+  }
+  function sortOrdersOf(w: Wrapper) {
+    return (tableOf(w).props('columns') as ColumnProp[]).map((column) => column.sortOrder)
+  }
+  function save(w: Wrapper, settings: TableSettings) {
+    drawerOf(w).vm.$emit('save', settings)
+    return nextTick()
+  }
 
-    await w.setProps({ hiddenColumns: ['dept'] })
-    await buttonByText(w, 'Đặt lại').trigger('click')
-    expect(columnKeys(w)).toEqual(['name', 'age', 'dept'])
-    expect(w.emitted('update:hiddenColumns')?.at(-1)).toEqual([[]])
+  it('nút Thiết lập mở drawer với cột cấu hình được + thiết lập gốc; không có columns thì không có nút', async () => {
+    const w = mount(CTable, { props: { showColumnSetting: true }, attrs: { columns: settingColumns } })
+    expect(w.find('[data-title="Thiết lập"]').exists()).toBe(true)
+    expect(settingsButtonOf(w).attributes('aria-haspopup')).toBe('dialog')
+    expect(drawerOf(w).props('open')).toBe(false)
+
+    await settingsButtonOf(w).trigger('click')
+    expect(drawerOf(w).props()).toEqual({
+      open: true,
+      columns: [
+        { key: 'name', label: 'Tên', pin: 'none', sortField: 'name' },
+        { key: 'age', label: 'Tuổi', pin: 'none', sortField: 'age' },
+        { key: 'dept', label: 'Phòng ban', pin: 'none', sortField: null },
+      ],
+      settings: { columnOrder: [], hiddenColumns: [], defaultSort: null },
+    })
+
+    const bare = mount(CTable, { props: { showColumnSetting: true } })
+    expect(settingsButtonOf(bare).exists()).toBe(false)
+    expect(drawerOf(bare).exists()).toBe(false)
+  })
+
+  it('Lưu lại → xếp/ẩn cột trên bảng (cột tiện ích giữ chỗ), emit update:settings đã chuẩn hoá; đóng drawer trả focus', async () => {
+    const w = mount(CTable, {
+      props: { showColumnSetting: true },
+      attrs: { columns: settingColumns },
+      attachTo: document.body,
+    })
+    await settingsButtonOf(w).trigger('click')
+    await save(w, { columnOrder: ['dept', 'name', 'age'], hiddenColumns: ['age', 'gone'], defaultSort: null })
+
+    const applied = { columnOrder: ['dept', 'name', 'age'], hiddenColumns: ['age'], defaultSort: null }
+    expect(columnKeys(w)).toEqual(['dept', 'name', 'actions'])
+    expect(w.emitted('update:settings')).toEqual([[applied]])
+    expect(drawerOf(w).props('settings')).toEqual(applied)
+    // Không đổi sắp xếp mặc định → không phát change, không tải lại.
+    expect(w.emitted('change')).toBeUndefined()
+
+    drawerOf(w).vm.$emit('update:open', false)
+    await flushPromises()
+    expect(drawerOf(w).props('open')).toBe(false)
+    expect(document.activeElement).toBe(settingsButtonOf(w).element)
+    w.unmount()
+  })
+
+  it('settingsKey: dựng bảng theo thiết lập đã lưu; Lưu lại ghi localStorage, trùng cấu hình gốc thì xoá key', async () => {
+    saveToStorage('staff', { columnOrder: ['age', 'name', 'dept'], hiddenColumns: ['dept'], defaultSort: null })
+    const w = mount(CTable, {
+      props: { showColumnSetting: true, settingsKey: 'staff' },
+      attrs: { columns: settingColumns },
+    })
+    expect(columnKeys(w)).toEqual(['age', 'name', 'actions'])
+
+    await save(w, { columnOrder: ['name', 'age', 'dept'], hiddenColumns: ['name'], defaultSort: null })
+    expect(storedOf('staff')).toEqual({ version: 1, columnOrder: [], hiddenColumns: ['name'], defaultSort: null })
+    expect(columnKeys(w)).toEqual(['age', 'dept', 'actions'])
+
+    await save(w, { columnOrder: [], hiddenColumns: [], defaultSort: null })
+    expect(localStorage.getItem('antadmin:table:staff')).toBeNull()
+    expect(columnKeys(w)).toEqual(['name', 'age', 'dept', 'actions'])
+  })
+
+  it('nhiều CTable trên một trang: mỗi settingsKey một thiết lập riêng, lưu bảng này không đụng bảng kia', async () => {
+    saveToStorage('orders', { columnOrder: [], hiddenColumns: ['age'], defaultSort: null })
+    const w = mount({
+      render: () =>
+        h('div', [
+          h(CTable, { settingsKey: 'orders', showColumnSetting: true, columns: settingColumns }),
+          h(CTable, { settingsKey: 'orders:items', showColumnSetting: true, columns: settingColumns }),
+        ]),
+    })
+    const [orders, items] = w.findAllComponents(CTable)
+    expect(columnKeys(orders!)).toEqual(['name', 'dept', 'actions'])
+    expect(columnKeys(items!)).toEqual(['name', 'age', 'dept', 'actions'])
+
+    await save(items!, { columnOrder: [], hiddenColumns: ['dept'], defaultSort: null })
+    expect(storedOf('orders:items')).toMatchObject({ hiddenColumns: ['dept'] })
+    expect(storedOf('orders')).toMatchObject({ hiddenColumns: ['age'] })
+    expect(columnKeys(orders!)).toEqual(['name', 'dept', 'actions'])
+    expect(columnKeys(items!)).toEqual(['name', 'age', 'actions'])
+  })
+
+  it('thiết lập đã lưu hỏng/khác version → cấu hình gốc; đổi settingsKey → nạp thiết lập của khoá mới', async () => {
+    localStorage.setItem('antadmin:table:broken', '{hỏng')
+    localStorage.setItem('antadmin:table:old', JSON.stringify({ version: 0, hidden: ['name'] }))
+    saveToStorage('next', { columnOrder: [], hiddenColumns: ['name'], defaultSort: null })
+    const w = mount(CTable, { props: { settingsKey: 'broken' }, attrs: { columns: settingColumns } })
+    expect(columnKeys(w)).toEqual(['name', 'age', 'dept', 'actions'])
+    await w.setProps({ settingsKey: 'old' })
+    expect(columnKeys(w)).toEqual(['name', 'age', 'dept', 'actions'])
+    await w.setProps({ settingsKey: 'next' })
+    expect(columnKeys(w)).toEqual(['age', 'dept', 'actions'])
+  })
+
+  it('v-model:settings: prop thắng storage và đồng bộ theo prop; bỏ bind → quay về storage', async () => {
+    saveToStorage('staff', { columnOrder: [], hiddenColumns: ['name'], defaultSort: null })
+    const w = mount(CTable, {
+      props: {
+        showColumnSetting: true,
+        settingsKey: 'staff',
+        settings: { columnOrder: [], hiddenColumns: ['dept'], defaultSort: null },
+      },
+      attrs: { columns: settingColumns },
+    })
+    expect(columnKeys(w)).toEqual(['name', 'age', 'actions'])
+    await w.setProps({ settings: { columnOrder: ['age', 'name', 'dept'], hiddenColumns: [], defaultSort: null } })
+    expect(columnKeys(w)).toEqual(['age', 'name', 'dept', 'actions'])
+    await w.setProps({ settings: undefined })
+    expect(columnKeys(w)).toEqual(['age', 'dept', 'actions'])
+  })
+
+  it('lưu thiết lập mà cột cấu hình được thiếu key/dataIndex → báo lỗi dùng sai API; không lưu thì cho phép', () => {
+    const columns = [...settingColumns, { title: 'Thao tác' }]
+    // Vue in cảnh báo "Unhandled error" trước khi ném lại lỗi — tắt để log test gọn.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(() => mount(CTable, { props: { settingsKey: 'staff' }, attrs: { columns } })).toThrow(
+      '[@antadmin/ui] CTable: cột "Thao tác" cần `key` hoặc `dataIndex` để lưu thiết lập',
+    )
+    const settings = { columnOrder: [], hiddenColumns: [], defaultSort: null }
+    expect(() => mount(CTable, { props: { settings }, attrs: { columns } })).toThrow('cần `key` hoặc `dataIndex`')
+    warn.mockRestore()
+    expect(() => mount(CTable, { props: { showColumnSetting: true }, attrs: { columns } })).not.toThrow()
+  })
+
+  it('sắp xếp mặc định: sortOrder theo thiết lập, bấm tiêu đề cột cập nhật; lưu sắp xếp mới → phát change về trang 1', async () => {
+    saveToStorage('staff', { columnOrder: [], hiddenColumns: [], defaultSort: { field: 'age', order: 'descend' } })
+    const onChange = vi.fn()
+    const w = mount(CTable, {
+      props: { showColumnSetting: true, settingsKey: 'staff' },
+      attrs: { columns: settingColumns, dataSource: rows, pagination: { current: 3, pageSize: 10, total: 30 }, onChange },
+    })
+    expect(sortOrdersOf(w)).toEqual([null, 'descend', undefined, undefined])
+
+    // Người dùng bấm tiêu đề cột Tên: a-table phát change → chỉ báo đổi theo, sự kiện chuyển tiếp cho trang.
+    const tableChange = tableOf(w).props('onChange') as (...params: unknown[]) => void
+    tableChange({ current: 3, pageSize: 10 }, { dept: ['kt'] }, { field: 'name', order: 'ascend' }, { action: 'sort' })
+    await nextTick()
+    expect(sortOrdersOf(w)).toEqual(['ascend', null, undefined, undefined])
+    expect(onChange).toHaveBeenCalledTimes(1)
+
+    // Lưu thiết lập mà sắp xếp mặc định giữ nguyên → giữ sắp xếp đang xem, không phát change.
+    await save(w, { columnOrder: ['age', 'name', 'dept'], hiddenColumns: [], defaultSort: { field: 'age', order: 'descend' } })
+    expect(onChange).toHaveBeenCalledTimes(1)
+    expect(sortOrdersOf(w)).toEqual([null, 'ascend', undefined, undefined])
+
+    await save(w, { columnOrder: [], hiddenColumns: [], defaultSort: { field: 'name', order: 'descend' } })
+    expect(onChange).toHaveBeenCalledTimes(2)
+    const [pagination, filters, sorter, extra] = onChange.mock.calls[1] ?? []
+    expect(pagination).toMatchObject({ current: 1, pageSize: 10, total: 30 })
+    expect(filters).toEqual({ dept: ['kt'] })
+    expect(sorter).toEqual({ column: settingColumns[0], columnKey: 'name', field: 'name', order: 'descend' })
+    expect(extra).toEqual({ action: 'sort', currentDataSource: rows })
+    expect(sortOrdersOf(w)).toEqual(['descend', null, undefined, undefined])
+
+    // Tắt sắp xếp mặc định → change với sorter rỗng (useTable bỏ sortField/sortOrder).
+    await save(w, { columnOrder: [], hiddenColumns: [], defaultSort: null })
+    expect(onChange.mock.calls[2]?.[2]).toEqual({})
+    expect(sortOrdersOf(w)).toEqual([null, null, undefined, undefined])
+    expect(storedOf('staff')).toBeNull()
+  })
+
+  it('bảng tắt phân trang, không có dataSource → change tự phát có pagination rỗng, currentDataSource []', async () => {
+    const w = mount(CTable, { props: { showColumnSetting: true }, attrs: { columns: settingColumns, pagination: false } })
+    await save(w, { columnOrder: [], hiddenColumns: [], defaultSort: { field: 'age', order: 'ascend' } })
+    expect(w.emitted('change')?.at(-1)).toEqual([
+      {},
+      {},
+      { column: settingColumns[1], columnKey: 'age', field: 'age', order: 'ascend' },
+      { action: 'sort', currentDataSource: [] },
+    ])
+  })
+
+  it('không đụng sortOrder khi không dùng thiết lập hoặc trang tự điều khiển; defaultSortOrder của cột là sắp xếp ban đầu', () => {
+    expect(sortOrdersOf(mount(CTable, { attrs: { columns: settingColumns } }))).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ])
+    const pageControlled = [{ ...settingColumns[0], sortOrder: 'ascend' }, settingColumns[1]]
+    expect(
+      sortOrdersOf(mount(CTable, { props: { showColumnSetting: true }, attrs: { columns: pageControlled } })),
+    ).toEqual(['ascend', undefined])
+    const withDefault = [settingColumns[0], { ...settingColumns[1], defaultSortOrder: 'ascend' }]
+    expect(sortOrdersOf(mount(CTable, { props: { showColumnSetting: true }, attrs: { columns: withDefault } }))).toEqual([
+      null,
+      'ascend',
+    ])
   })
 })
 

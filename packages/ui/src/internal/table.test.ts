@@ -5,10 +5,10 @@ import {
   columnKeyOf,
   columnLabelOf,
   formatTotal,
+  hasColumnKey,
   isPlainObject,
   mergePagination,
   mergeRowClassName,
-  visibleColumns,
 } from './table'
 
 describe('isPlainObject / camelizeKeys', () => {
@@ -28,7 +28,7 @@ describe('isPlainObject / camelizeKeys', () => {
   })
 })
 
-describe('columnKeyOf / columnLabelOf / visibleColumns', () => {
+describe('columnKeyOf / hasColumnKey / columnLabelOf', () => {
   it('key ưu tiên key → dataIndex (mảng nối dấu chấm) → vị trí', () => {
     expect(columnKeyOf({ key: 'code', dataIndex: 'x' }, 0)).toBe('code')
     expect(columnKeyOf({ key: 7 }, 0)).toBe('7')
@@ -46,12 +46,12 @@ describe('columnKeyOf / columnLabelOf / visibleColumns', () => {
     expect(columnLabelOf({ title: '', key: 'actions' }, 0)).toBeUndefined()
   })
 
-  it('bỏ cột đang ẩn, luôn trả mảng mới', () => {
-    const cols = [{ key: 'code' }, { key: 'name' }, { title: 'Không key' }]
-    expect(visibleColumns(cols, ['name', '__col_2'])).toEqual([{ key: 'code' }])
-    const copy = visibleColumns(cols, [])
-    expect(copy).toEqual(cols)
-    expect(copy).not.toBe(cols)
+  it('hasColumnKey: chỉ đúng khi trang khai báo key/dataIndex (key theo vị trí không lưu thiết lập được)', () => {
+    expect(hasColumnKey({ key: 'code' })).toBe(true)
+    expect(hasColumnKey({ dataIndex: ['owner', 'name'] })).toBe(true)
+    expect(hasColumnKey({ key: 0 })).toBe(true)
+    expect(hasColumnKey({ title: 'Thao tác' })).toBe(false)
+    expect(hasColumnKey({ key: '', dataIndex: [] })).toBe(false)
   })
 })
 

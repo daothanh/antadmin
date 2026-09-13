@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import type { Paginated } from '@antadmin/utils'
 import { useTable } from './useTable'
@@ -15,6 +15,10 @@ function makeFetcher(total = 42) {
     }),
   )
 }
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('useTable', () => {
   it('tự load lần đầu (immediate mặc định) và set dataSource/total', async () => {
@@ -47,6 +51,55 @@ describe('useTable', () => {
     expect(t.query.sortOrder).toBe('descend')
     expect(t.query.filters).toEqual({ status: ['active'] })
     expect(fetcher).toHaveBeenCalledTimes(1)
+  })
+
+  it('onChange: bỏ sắp xếp → xoá sortField/sortOrder; nhiều cột → lấy cột đầu; dataIndex lồng nối dấu chấm', async () => {
+    const fetcher = makeFetcher()
+    const t = useTable(fetcher, { immediate: false })
+    await t.onChange({ current: 1 }, {}, [
+      { field: ['owner', 'name'], order: 'descend' },
+      { field: 'age', order: 'ascend' },
+    ])
+    expect(t.query).toMatchObject({ sortField: 'owner.name', sortOrder: 'descend' })
+    await t.onChange({ current: 1 }, {}, { field: 3, order: 'ascend' })
+    expect(t.query).toMatchObject({ sortField: '3', sortOrder: 'ascend' })
+
+    // a-table bỏ sắp xếp vẫn phát field; CTable tắt sắp xếp mặc định phát sorter rỗng.
+    for (const sorter of [{ field: 'name', order: null }, { order: 'ascend' as const }, {}]) {
+      await t.onChange({ current: 1 }, {}, sorter)
+      expect(t.query.sortField).toBeUndefined()
+      expect(t.query.sortOrder).toBeUndefined()
+    }
+    expect(fetcher).toHaveBeenCalledTimes(5)
+  })
+
+  it('settingsKey → lần load đầu đã theo sắp xếp mặc định CTable lưu; chưa lưu thì không sắp xếp', async () => {
+    const stored = new Map([
+      [
+        'antadmin:table:orders',
+        JSON.stringify({
+          version: 1,
+          columnOrder: [],
+          hiddenColumns: ['code'],
+          defaultSort: { field: 'updatedAt', order: 'descend' },
+        }),
+      ],
+    ])
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    })
+    const fetcher = makeFetcher()
+    useTable(fetcher, { settingsKey: 'orders' })
+    await nextTick()
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    expect(fetcher).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 1, sortField: 'updatedAt', sortOrder: 'descend' }),
+    )
+
+    const other = useTable(makeFetcher(), { settingsKey: 'orders:items', immediate: false })
+    expect(other.query).not.toHaveProperty('sortField')
   })
 
   it('onFilter thay bộ lọc form, về trang 1, load với filters; filterValues phản ánh bộ lọc form', async () => {

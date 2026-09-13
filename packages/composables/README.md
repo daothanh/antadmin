@@ -9,7 +9,7 @@ Composable dùng chung. Phụ thuộc context Nuxt (`nuxt/app`) — được aut
 | `useApi(options?)` | `$fetch` cấu hình sẵn: baseURL từ runtimeConfig (BFF `/api`), SSR forward cookie (`useRequestFetch`), lỗi → `AppError`. |
 | `useAuth()` | `user`, `isAuthenticated`, `login/logout/refresh/fetchUser`. Uỷ quyền cho `AuthProvider` (inject qua layer). |
 | `usePermission()` | `can/canAll/canAny/hasRole` — guard quyền, không chứa flow login. |
-| `useTable(fetcher, options?)` | State phân trang/sort/filter, trả `pagination`+`onChange` và bộ lọc dựng sẵn `filterValues`+`onFilter` (`options.filters` = bộ lọc mặc định) để bind CTable. |
+| `useTable(fetcher, options?)` | State phân trang/sort/filter, trả `pagination`+`onChange` và bộ lọc dựng sẵn `filterValues`+`onFilter` (`options.filters` = bộ lọc mặc định, `options.settingsKey` = khoá thiết lập của CTable để lần load đầu theo sắp xếp mặc định đã lưu) để bind CTable. |
 
 ## Hợp đồng AuthProvider
 `useAuth` đọc provider tại `nuxtApp.$antadminAuth` (layer inject). Interface: `login/logout/handleCallback/refresh/getUser` — cắm OIDC mặc định hoặc SAML/cổng riêng sau.

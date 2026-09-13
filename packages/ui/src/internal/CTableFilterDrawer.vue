@@ -163,12 +163,14 @@ function reset() {
       <div class="c-table-filter-drawer__footer">
         <CButton
           variant="outline"
+          block
           @click="reset"
         >
           Đặt lại
         </CButton>
         <CButton
           variant="primary"
+          block
           @click="apply"
         >
           Áp dụng
@@ -183,9 +185,10 @@ function reset() {
 .c-table-filter-drawer__control {
   width: 100%;
 }
+/* Hai nút chia đôi — cùng kiểu footer drawer Thiết lập của CTable. */
 .c-table-filter-drawer__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 </style>

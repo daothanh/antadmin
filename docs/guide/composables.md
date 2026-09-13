@@ -68,17 +68,34 @@ const { dataSource, loading, pagination, filterValues, onChange, onFilter } = us
 />
 ```
 
+Sắp xếp mặc định trong thiết lập của `CTable` (xem [Thiết lập bảng](/guide/ui#thiet-lap-bang)) — truyền cùng khoá:
+
+```ts
+const TABLE_KEY = 'orders'
+const { dataSource, loading, pagination, onChange } = useTable<Order>(
+  (query) => api('/orders', { query }),
+  { settingsKey: TABLE_KEY }, // lần load đầu đã theo sắp xếp mặc định người dùng lưu
+)
+```
+
+```vue
+<CTable :settings-key="TABLE_KEY" show-column-setting :columns="columns" :pagination="pagination" @change="onChange" />
+```
+
 | Trả về | Mô tả |
 |---|---|
 | `dataSource`, `loading`, `error`, `total` | State dữ liệu; lỗi fetcher quy về `AppError` |
 | `query` | `TableQuery` gửi cho fetcher: `page`, `pageSize`, `sortField?`, `sortOrder?`, `filters?` |
 | `pagination` | Bind `:pagination` của `CTable` |
 | `filterValues` | Bộ lọc form đang áp dụng (chỉ đọc) — bind `:filter-values` |
-| `onChange(pagination, filters?, sorter?)` | Bind `@change`: cập nhật trang/sort/filter cột rồi tải lại |
+| `onChange(pagination, filters?, sorter?)` | Bind `@change`: cập nhật trang/sort/filter cột rồi tải lại (kể cả `change` CTable phát khi lưu sắp xếp mặc định) |
 | `onFilter(values)` | Bind `@update:filter-values`: thay bộ lọc form, về trang 1 rồi tải lại |
 | `load()` / `reload()` | Tải lại giữ trang / về trang 1 |
 
 - `query.filters` = filter cột của `a-table` gộp với bộ lọc form (trùng key thì bộ lọc form thắng); không
   có bộ lọc nào thì `undefined`. Đổi trang/sort không làm mất bộ lọc form.
+- `query.sortField` lấy từ `dataIndex` của cột (lồng thì nối `.`); bỏ sắp xếp → `sortField`/`sortOrder` về `undefined`;
+  sắp xếp nhiều cột (`sorter.multiple`) chỉ gửi cột đầu.
+- `options.settingsKey` = `settings-key` của `CTable`: đọc sắp xếp mặc định đã lưu cho `query` ban đầu.
 - `onChange`/`onFilter`/`reload` trả `Promise` ném `AppError` khi fetcher lỗi — bind thẳng vào sự kiện
   template thì lỗi đi qua error handler chung của app.
