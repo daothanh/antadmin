@@ -69,6 +69,13 @@ const CONTRAST_PAIRS: ContrastPair[] = [
   { fg: '#fff', bg: 'color-error', usedBy: 'Badge, hover item danger Dropdown antdv', modes: ['light'] },
   { fg: 'color-sidebar-bottom', bg: 'color-accent', usedBy: 'CSideNav mục :hover/đang chọn' },
 
+  // Chữ chính
+  {
+    fg: 'color-text',
+    bg: 'color-surface',
+    usedBy: 'mục chưa chọn của CTopNav, tiêu đề CCard, giá trị CStatistic, nút icon CTable',
+  },
+
   // Chữ phụ
   { fg: 'color-text-muted', bg: 'color-surface-muted', usedBy: 'CTag default' },
   { fg: 'color-text-muted', bg: 'color-surface', usedBy: 'nhãn CStatistic, nhãn thanh lọc CTable, footer CAppLayout' },
