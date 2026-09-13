@@ -4,7 +4,7 @@ Bộ component design system của AntAdmin, xây trên Ant Design Vue và bám 
 (`@antadmin/theme`). **Không** import trực tiếp `ant-design-vue` — ESLint sẽ chặn; dùng
 qua `@antadmin/ui` (hoặc các component `C*` đã đăng ký global).
 
-Tham khảo trực quan: chạy playground (`pnpm --filter playground dev`) → trang **/ui-kit**,
+Tham khảo trực quan: chạy playground (`pnpm turbo run dev --filter=playground`) → trang **/ui-kit**,
 hoặc Storybook (`pnpm --filter @antadmin/ui storybook`).
 
 ## Component thương hiệu (có style riêng)

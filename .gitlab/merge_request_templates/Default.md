@@ -14,7 +14,7 @@
 - [ ] `pnpm lint && pnpm typecheck && pnpm build && pnpm test` pass local.
 - [ ] Có `.changeset/*.md` nếu đổi code trong `packages/*` (bỏ qua nếu chỉ đổi docs/config).
 - [ ] Test mới/cập nhật cho package có coverage gate (`ui`, `composables`, `utils`, `ai`, `mcp`).
-- [ ] Đã test tay trên playground (`pnpm --filter playground dev`) — mô tả bước test ở dưới.
+- [ ] Đã test tay trên playground (`pnpm turbo run dev --filter=playground`) — mô tả bước test ở dưới.
 - [ ] Không import `ant-design-vue` ngoài `@antadmin/ui`; `composables` không phụ thuộc `ui`;
       `utils` không phụ thuộc Nuxt; tối đa 2 tầng Nuxt layer.
 - [ ] Không đưa business logic đặc thù của 1 sản phẩm vào core (xem "Tiêu chí core-worthy" trong
