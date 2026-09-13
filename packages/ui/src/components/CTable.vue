@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, useAttrs, useSlots, watch } from 'vue'
-import type { StyleValue } from 'vue'
+import { computed, nextTick, ref, shallowRef, toRaw, useAttrs, useSlots, watch } from 'vue'
+import type { ComponentPublicInstance, StyleValue } from 'vue'
 import { Badge, Checkbox, Input, Popover, Table, Tooltip } from 'ant-design-vue'
 import type { TableColumnsType, TablePaginationConfig } from 'ant-design-vue'
 import {
@@ -13,6 +13,10 @@ import {
 } from '@tabler/icons-vue'
 import CButton from './CButton.vue'
 import CCard from './CCard.vue'
+import CTag from './CTag.vue'
+import CTableFilterDrawer from '../internal/CTableFilterDrawer.vue'
+import { activeFiltersOf } from '../internal/filter'
+import type { TableFilterField, TableFilterValues } from '../internal/filter'
 import {
   camelizeKeys,
   columnKeyOf,
@@ -25,6 +29,7 @@ import {
 
 // Bảng trang danh sách chuẩn AntAdmin: khung card (tiêu đề + toolbar Thêm mới, Tìm kiếm, Lọc,
 // Xuất, Tải lại, Cài đặt cột), header bảng nền primary, phân trang "Tổng số dòng".
+// Có filterFields: nút Lọc mở drawer lọc dựng sẵn, thanh điều kiện lọc hiện ngay trên bảng.
 // Cột do trang định nghĩa; mọi prop/slot/sự kiện khác của a-table (columns, dataSource, loading,
 // pagination, bodyCell, @change…) được forward nguyên vẹn — bind thẳng với useTable như trước.
 defineOptions({ name: 'CTable', inheritAttrs: false })
@@ -49,11 +54,18 @@ const props = withDefaults(defineProps<{
   showSearch?: boolean
   searchValue?: string
   searchPlaceholder?: string
-  /** Nút "Lọc" (sự kiện filter) — trang tự mở drawer/panel lọc. */
+  /** Nút "Lọc" (sự kiện filter) — có filterFields thì mở drawer lọc dựng sẵn, không thì trang tự mở. */
   showFilter?: boolean
   filterText?: string
-  /** Số bộ lọc đang áp dụng; lớn hơn 0 thì hiện chấm đỏ trên nút Lọc. */
+  /** Số bộ lọc đang áp dụng (lớn hơn 0 hiện chấm đỏ trên nút Lọc); có filterFields thì tự đếm. */
   filterCount?: number
+  /**
+   * Trường của drawer lọc dựng sẵn — trang khai báo, như columns. Có giá trị → nút Lọc mở drawer và thanh
+   * điều kiện lọc hiện trên bảng; trường type custom render control qua slot #filterField.
+   */
+  filterFields?: TableFilterField[]
+  /** v-model:filterValues — bộ lọc đã áp dụng (không bind thì CTable tự giữ state). */
+  filterValues?: TableFilterValues
   /** Nút tròn xuất dữ liệu (sự kiện export). */
   showExport?: boolean
   /** Nút tròn tải lại (sự kiện reload); icon xoay khi bảng loading. */
@@ -77,6 +89,8 @@ const props = withDefaults(defineProps<{
   showFilter: false,
   filterText: 'Lọc',
   filterCount: 0,
+  filterFields: undefined,
+  filterValues: undefined,
   showExport: false,
   showReload: false,
   showColumnSetting: false,
@@ -86,6 +100,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   'update:searchValue': [value: string]
   'update:hiddenColumns': [keys: string[]]
+  'update:filterValues': [values: TableFilterValues]
   search: [value: string]
   create: []
   filter: []
@@ -97,8 +112,8 @@ const attrs = useAttrs()
 // Ép kiểu tường minh để cắt vòng suy luận slot của vue-tsc (tránh TS7022 khi forward slot động)
 const slots: Record<string, unknown> = useSlots()
 
-// Slot CTable tự render ở header — không forward xuống a-table (tránh hiện trùng).
-const OWN_SLOTS = new Set(['title', 'toolbar'])
+// Slot CTable tự render (header, drawer lọc) — không forward xuống a-table (tránh hiện trùng).
+const OWN_SLOTS = new Set(['title', 'toolbar', 'filterField'])
 // Attr CTable tự xử lý (gắn khung ngoài hoặc gộp cấu hình) trước khi chuyển cho a-table.
 const OWN_ATTRS = new Set(['class', 'style', 'columns', 'pagination', 'rowClassName'])
 
@@ -193,11 +208,80 @@ function onSearch() {
   emit('search', searchText.value)
 }
 
+// ── Bộ lọc dựng sẵn: drawer + thanh điều kiện (v-model:filterValues, không bind thì tự giữ state) ──
+// shallowRef + toRaw: luôn thay cả object, và giá trị phát ra ngoài là object thường (không lọt proxy).
+const appliedFilters = shallowRef<TableFilterValues>({ ...toRaw(props.filterValues) })
+watch(
+  () => props.filterValues,
+  (values) => {
+    appliedFilters.value = { ...toRaw(values) }
+  },
+)
+const filterOpen = ref(false)
+const filterButtonRef = ref<ComponentPublicInstance | null>(null)
+const filterListRef = ref<HTMLElement | null>(null)
+
+const activeFilters = computed(() =>
+  props.filterFields ? activeFiltersOf(props.filterFields, appliedFilters.value) : [],
+)
+const activeFilterCount = computed(() =>
+  props.filterFields ? activeFilters.value.length : props.filterCount,
+)
 const filterLabel = computed(() =>
-  props.filterCount > 0
-    ? `${props.filterText} (đang áp dụng ${props.filterCount} bộ lọc)`
+  activeFilterCount.value > 0
+    ? `${props.filterText} (đang áp dụng ${activeFilterCount.value} bộ lọc)`
     : props.filterText,
 )
+
+// Trường custom mà thiếu slot thì drawer chỉ hiện nhãn trống — dùng sai API, báo ngay khi dựng bảng.
+watch(
+  () => props.filterFields,
+  (fields) => {
+    if (fields?.some((field) => field.type === 'custom') && !slots.filterField) {
+      throw new Error(
+        '[@antadmin/ui] CTable: trường lọc type "custom" cần slot #filterField để render control.',
+      )
+    }
+  },
+  { immediate: true },
+)
+
+function onFilterClick() {
+  emit('filter')
+  if (props.filterFields) filterOpen.value = true
+}
+function updateFilterValues(values: TableFilterValues) {
+  appliedFilters.value = values
+  emit('update:filterValues', values)
+}
+
+function focusFilterButton() {
+  const el: unknown = filterButtonRef.value?.$el
+  if (el instanceof HTMLElement) el.focus()
+}
+// Nút ✕ vừa bấm biến mất → đưa focus sang thẻ kế tiếp (hết thẻ thì về nút Lọc), người dùng bàn phím
+// không bị rơi về đầu trang.
+async function removeFilter(key: string, position: number): Promise<void> {
+  updateFilterValues(
+    Object.fromEntries(Object.entries(appliedFilters.value).filter(([name]) => name !== key)),
+  )
+  await nextTick()
+  const buttons = filterListRef.value?.querySelectorAll('button') ?? []
+  const next = buttons[Math.min(position, buttons.length - 1)]
+  if (next) next.focus()
+  else focusFilterButton()
+}
+async function clearFilters(): Promise<void> {
+  updateFilterValues({})
+  await nextTick()
+  focusFilterButton()
+}
+// antdv Drawer không trả focus khi đóng → đưa về nút Lọc.
+watch(filterOpen, async (open) => {
+  if (open) return
+  await nextTick()
+  focusFilterButton()
+})
 
 const isLoading = computed(() => {
   const { loading } = normalizedAttrs.value
@@ -286,12 +370,14 @@ function stopInCollapse(event: Event) {
         </Input>
         <Badge
           v-if="showFilter"
-          :dot="filterCount > 0"
+          :dot="activeFilterCount > 0"
         >
           <CButton
+            ref="filterButtonRef"
             variant="primary"
             :aria-label="filterLabel"
-            @click="emit('filter')"
+            :aria-haspopup="filterFields ? 'dialog' : undefined"
+            @click="onFilterClick"
           >
             <template #icon>
               <IconFilter
@@ -302,6 +388,21 @@ function stopInCollapse(event: Event) {
             {{ filterText }}
           </CButton>
         </Badge>
+        <!-- Drawer teleport ra body nên click/Enter bên trong không nổi lên toolbar. -->
+        <CTableFilterDrawer
+          v-if="showFilter && filterFields"
+          v-model:open="filterOpen"
+          :fields="filterFields"
+          :values="appliedFilters"
+          @apply="updateFilterValues"
+        >
+          <template #field="slotProps">
+            <slot
+              name="filterField"
+              v-bind="slotProps"
+            />
+          </template>
+        </CTableFilterDrawer>
         <Tooltip
           v-if="showExport"
           title="Xuất dữ liệu"
@@ -382,6 +483,46 @@ function stopInCollapse(event: Event) {
       </div>
     </template>
 
+    <div
+      v-if="activeFilters.length"
+      class="c-table__filters"
+      role="group"
+      aria-label="Điều kiện lọc"
+    >
+      <span class="c-table__filters-label">
+        Đang lọc:
+      </span>
+      <ul
+        ref="filterListRef"
+        class="c-table__filter-list"
+      >
+        <li
+          v-for="(condition, position) in activeFilters"
+          :key="condition.key"
+        >
+          <!-- info: đạt tương phản AA ở cả theme sáng lẫn tối (primary/primary-soft ở theme tối chưa đạt). -->
+          <CTag
+            color="info"
+            closable
+            :close-text="`Bỏ lọc ${condition.label}: ${condition.text}`"
+            :title="`${condition.label}: ${condition.text}`"
+            @close="removeFilter(condition.key, position)"
+          >
+            <span class="c-table__filter-text">
+              {{ condition.label }}: <strong>{{ condition.text }}</strong>
+            </span>
+          </CTag>
+        </li>
+      </ul>
+      <button
+        type="button"
+        class="c-table__filters-clear"
+        @click="clearFilters"
+      >
+        Xoá tất cả
+      </button>
+    </div>
+
     <Table
       v-bind="tableProps"
       :columns="displayColumns"
@@ -435,6 +576,43 @@ function stopInCollapse(event: Event) {
   margin: 12px 16px;
   row-gap: 8px;
 }
+/* Thanh điều kiện lọc: giữa header và bảng, thẻ tự xuống dòng; chữ dài cắt bằng dấu … (title đủ nội dung). */
+.c-table__filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--antadmin-color-border);
+}
+.c-table__filters-label {
+  color: var(--antadmin-color-text-muted);
+}
+.c-table__filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.c-table__filter-list > li {
+  max-width: 100%;
+}
+.c-table__filter-list .c-tag {
+  max-width: 100%;
+}
+.c-table__filter-text {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 400;
+  text-overflow: ellipsis;
+}
+.c-table__filters-clear {
+  margin-inline-start: auto;
+}
+
 /* Dòng xen kẽ — nhường nền cho hover/selected của antdv. */
 .c-table--striped :deep(.ant-table-tbody > tr.c-table__row--striped:not(:hover):not(.ant-table-row-selected) > td) {
   background: var(--antadmin-color-surface-muted);
@@ -484,7 +662,8 @@ function stopInCollapse(event: Event) {
   border-color: var(--antadmin-color-primary);
 }
 .c-table__icon-btn:focus-visible,
-.c-table__settings-reset:focus-visible {
+.c-table__settings-reset:focus-visible,
+.c-table__filters-clear:focus-visible {
   outline: 2px solid var(--antadmin-color-primary);
   outline-offset: 2px;
 }
@@ -505,7 +684,8 @@ function stopInCollapse(event: Event) {
   justify-content: space-between;
   gap: 16px;
 }
-.c-table__settings-reset {
+.c-table__settings-reset,
+.c-table__filters-clear {
   padding: 0;
   font: inherit;
   font-weight: 500;

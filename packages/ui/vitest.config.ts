@@ -27,6 +27,8 @@ export default defineConfig({
         'src/components/CForm.vue',
         'src/components/CTable.vue',
         'src/internal/table.ts',
+        'src/internal/filter.ts',
+        'src/internal/CTableFilterDrawer.vue',
         'src/useConfirm.ts',
         'src/useErrorHandler.ts',
       ],

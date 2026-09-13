@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/vue3'
 import { computed, ref } from 'vue'
-import { Dropdown, Menu, MenuItem } from 'ant-design-vue'
+import { Dropdown, Menu, MenuItem, RadioButton, RadioGroup } from 'ant-design-vue'
 import { IconCircleCheck, IconCircleX, IconDotsVertical } from '@tabler/icons-vue'
 import CTable from './CTable.vue'
+import type { TableFilterField, TableFilterValues } from '../internal/filter'
 
 const meta: Meta<typeof CTable> = {
   title: 'Components/CTable',
@@ -58,6 +59,60 @@ const VEHICLES = Array.from({ length: 351 }, (_, i) => {
   }
 })
 
+// Trường lọc cũng do TRANG khai báo (như columns); người cập nhật minh hoạ control tuỳ biến qua slot.
+const VEHICLE_FILTER_FIELDS: TableFilterField[] = [
+  { key: 'code', label: 'Mã xe', type: 'input', placeholder: 'VD: E22H-01' },
+  {
+    key: 'brand',
+    label: 'Hãng xe',
+    type: 'select',
+    multiple: true,
+    options: [...new Set(MODELS.map((m) => m.brand))].map((brand) => ({ label: brand, value: brand })),
+  },
+  {
+    key: 'line',
+    label: 'Dòng xe',
+    type: 'select',
+    multiple: true,
+    options: MODELS.map((m) => ({ label: m.line, value: m.line })),
+  },
+  {
+    key: 'status',
+    label: 'Trạng thái',
+    type: 'select',
+    options: [
+      { label: 'Hoạt động', value: 1 },
+      { label: 'Ngừng hoạt động', value: 0 },
+    ],
+  },
+  { key: 'updatedAt', label: 'Ngày cập nhật', type: 'dateRange' },
+  { key: 'updatedBy', label: 'Người cập nhật', type: 'custom' },
+]
+
+type Vehicle = (typeof VEHICLES)[number]
+
+/** `DD/MM/YYYY` của dữ liệu demo → `YYYY-MM-DD` để so với giá trị bộ lọc ngày. */
+function toIsoDate(date: string): string {
+  return date.split('/').reverse().join('-')
+}
+
+// Demo lọc phía client; trang thật gửi filterValues lên backend (useTable.onFilter).
+function matchesFilters(vehicle: Vehicle, filters: TableFilterValues): boolean {
+  const { code, brand, line, status, updatedAt, updatedBy } = filters
+  if (typeof code === 'string' && !vehicle.code.toLowerCase().includes(code.toLowerCase())) return false
+  if (Array.isArray(brand) && !brand.includes(vehicle.brand)) return false
+  if (Array.isArray(line) && !line.includes(vehicle.line)) return false
+  if (typeof status === 'number' && vehicle.status !== status) return false
+  if (typeof updatedBy === 'string' && vehicle.updatedBy !== updatedBy) return false
+  if (Array.isArray(updatedAt)) {
+    const [from, to]: unknown[] = updatedAt
+    const day = toIsoDate(vehicle.updatedAt)
+    if (typeof from === 'string' && day < from) return false
+    if (typeof to === 'string' && day > to) return false
+  }
+  return true
+}
+
 export const ListPage: Story = {
   name: 'Trang danh sách',
   render: () => ({
@@ -66,6 +121,8 @@ export const ListPage: Story = {
       ADropdown: Dropdown,
       AMenu: Menu,
       AMenuItem: MenuItem,
+      ARadioButton: RadioButton,
+      ARadioGroup: RadioGroup,
       IconCircleCheck,
       IconCircleX,
       IconDotsVertical,
@@ -75,15 +132,15 @@ export const ListPage: Story = {
       const pageSize = ref(25)
       const keyword = ref('')
       const appliedKeyword = ref('')
-      const filterCount = ref(1)
+      const filters = ref<TableFilterValues>({ status: 1 })
       const loading = ref(false)
       const lastEvent = ref('—')
 
       const rows = computed(() => {
         const q = appliedKeyword.value.trim().toLowerCase()
-        return q
-          ? VEHICLES.filter((v) => `${v.code} ${v.name}`.toLowerCase().includes(q))
-          : VEHICLES
+        return VEHICLES.filter(
+          (v) => (!q || `${v.code} ${v.name}`.toLowerCase().includes(q)) && matchesFilters(v, filters.value),
+        )
       })
       const pagination = computed(() => ({
         current: page.value,
@@ -118,6 +175,11 @@ export const ListPage: Story = {
         page.value = 1
         lastEvent.value = `search("${value}")`
       }
+      function onFilter(values: TableFilterValues) {
+        filters.value = values
+        page.value = 1
+        lastEvent.value = `update:filterValues(${JSON.stringify(values)})`
+      }
       function onReload() {
         loading.value = true
         lastEvent.value = 'reload'
@@ -127,7 +189,21 @@ export const ListPage: Story = {
         lastEvent.value = event
       }
 
-      return { columns, rows, pagination, keyword, filterCount, loading, lastEvent, onChange, onSearch, onReload, log }
+      return {
+        columns,
+        rows,
+        pagination,
+        keyword,
+        filters,
+        filterFields: VEHICLE_FILTER_FIELDS,
+        loading,
+        lastEvent,
+        onChange,
+        onSearch,
+        onFilter,
+        onReload,
+        log,
+      }
     },
     template: `
       <div>
@@ -140,7 +216,8 @@ export const ListPage: Story = {
           :pagination="pagination"
           :loading="loading"
           :scroll="{ x: 1200, y: 480 }"
-          :filter-count="filterCount"
+          :filter-fields="filterFields"
+          :filter-values="filters"
           show-create
           show-search
           show-filter
@@ -150,10 +227,17 @@ export const ListPage: Story = {
           @change="onChange"
           @search="onSearch"
           @create="log('create')"
-          @filter="filterCount = filterCount ? 0 : 1; log('filter')"
+          @update:filter-values="onFilter"
           @export="log('export')"
           @reload="onReload"
         >
+          <template #filterField="{ field, values }">
+            <ARadioGroup v-if="field.key === 'updatedBy'" v-model:value="values.updatedBy" button-style="solid">
+              <ARadioButton :value="undefined">Tất cả</ARadioButton>
+              <ARadioButton value="thangcd">thangcd</ARadioButton>
+              <ARadioButton value="thangcd1">thangcd1</ARadioButton>
+            </ARadioGroup>
+          </template>
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'status'">
               <IconCircleCheck v-if="record.status === 1" :size="20" style="color: var(--antadmin-color-success)" />
@@ -216,6 +300,57 @@ export const Collapsible: Story = {
           <span style="color:var(--antadmin-color-text-muted)">Slot #toolbar</span>
         </template>
       </CTable>
+    `,
+  }),
+}
+
+export const FilterValues: Story = {
+  name: 'Bộ lọc — giá trị phát ra',
+  render: () => ({
+    components: { CTable },
+    setup() {
+      const columns = [
+        { title: 'Tên', dataIndex: 'name', key: 'name' },
+        { title: 'Phòng ban', dataIndex: 'dept', key: 'dept' },
+        { title: 'Ngày vào', dataIndex: 'joinedAt', key: 'joinedAt' },
+      ]
+      const dataSource = [
+        { id: 1, name: 'An', dept: 'Kỹ thuật', joinedAt: '2024-03-01' },
+        { id: 2, name: 'Bình', dept: 'Vận hành', joinedAt: '2025-07-15' },
+      ]
+      const filterFields: TableFilterField[] = [
+        { key: 'name', label: 'Tên', type: 'input' },
+        {
+          key: 'dept',
+          label: 'Phòng ban',
+          type: 'select',
+          multiple: true,
+          options: [
+            { label: 'Kỹ thuật', value: 'kt' },
+            { label: 'Vận hành', value: 'vh' },
+          ],
+        },
+        { key: 'joinedAt', label: 'Ngày vào', type: 'date' },
+        { key: 'period', label: 'Giai đoạn', type: 'dateRange' },
+      ]
+      // Giá trị khởi tạo có key không khai báo (vd đọc từ URL) → vẫn hiện thẻ để người dùng bỏ được.
+      const filters = ref<TableFilterValues>({ dept: ['kt'], source: 'url' })
+      return { columns, dataSource, filterFields, filters }
+    },
+    template: `
+      <div>
+        <CTable
+          v-model:filter-values="filters"
+          title="Nhân sự"
+          row-key="id"
+          :columns="columns"
+          :data-source="dataSource"
+          :pagination="false"
+          :filter-fields="filterFields"
+          show-filter
+        />
+        <pre style="margin:8px 0 0;color:var(--antadmin-color-text-muted)">filterValues = {{ JSON.stringify(filters) }}</pre>
+      </div>
     `,
   }),
 }

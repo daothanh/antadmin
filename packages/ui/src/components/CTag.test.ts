@@ -21,4 +21,19 @@ describe('CTag', () => {
     const withDot = mount(CTag, { props: { dot: true } })
     expect(withDot.find('.c-tag__dot').exists()).toBe(true)
   })
+
+  it('closable → nút ✕ có aria-label (mặc định "Xoá"), bấm → emit close; không closable thì không có nút', async () => {
+    expect(mount(CTag).find('button').exists()).toBe(false)
+    expect(mount(CTag, { props: { closable: true } }).find('button').attributes('aria-label')).toBe('Xoá')
+
+    const w = mount(CTag, {
+      props: { closable: true, closeText: 'Bỏ lọc Trạng thái' },
+      slots: { default: 'Trạng thái' },
+    })
+    const button = w.find('button.c-tag__close')
+    expect(button.attributes('type')).toBe('button')
+    expect(button.attributes('aria-label')).toBe('Bỏ lọc Trạng thái')
+    await button.trigger('click')
+    expect(w.emitted('close')).toHaveLength(1)
+  })
 })

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 // Trang showcase bộ UI/UX AntAdmin — public để xem nhanh không cần đăng nhập.
+import type { TableFilterField } from '@antadmin/ui'
+
 definePageMeta({ auth: false })
 
 const amount = ref<number | null>(1250000)
@@ -7,16 +9,26 @@ const rate = ref<string>('8.5')
 
 const cardTypes = ['default', 'primary', 'outline', 'filled', 'ghost'] as const
 
-const columns = [
-  { title: 'Mã', dataIndex: 'code', key: 'code' },
-  { title: 'Khách hàng', dataIndex: 'customer', key: 'customer' },
-  { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
-]
-const rows = [
-  { id: 1, code: 'DH-001', customer: 'Công ty A', status: 'done' },
-  { id: 2, code: 'DH-002', customer: 'Công ty B', status: 'pending' },
-  { id: 3, code: 'DH-003', customer: 'Công ty C', status: 'rejected' },
-]
+type OrderStatus = 'done' | 'pending' | 'rejected'
+
+interface DemoOrder {
+  id: number
+  code: string
+  customer: string
+  status: OrderStatus
+  createdAt: string
+}
+
+const STATUSES: OrderStatus[] = ['done', 'pending', 'rejected']
+const CUSTOMERS = ['Công ty A', 'Công ty B', 'Công ty C', 'Công ty D']
+const ORDERS: DemoOrder[] = Array.from({ length: 23 }, (_, i) => ({
+  id: i + 1,
+  code: `DH-${String(i + 1).padStart(3, '0')}`,
+  customer: CUSTOMERS[i % CUSTOMERS.length] ?? '',
+  status: STATUSES[i % STATUSES.length] ?? 'done',
+  createdAt: `2026-09-${String((i % 13) + 1).padStart(2, '0')}`,
+}))
+
 const tagColor: Record<string, 'success' | 'warning' | 'error'> = {
   done: 'success',
   pending: 'warning',
@@ -27,6 +39,48 @@ const tagLabel: Record<string, string> = {
   pending: 'Chờ duyệt',
   rejected: 'Từ chối',
 }
+
+const columns = [
+  { title: 'Mã', dataIndex: 'code', key: 'code' },
+  { title: 'Khách hàng', dataIndex: 'customer', key: 'customer' },
+  { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'createdAt' },
+  { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
+]
+const filterFields: TableFilterField[] = [
+  { key: 'customer', label: 'Khách hàng', type: 'input', placeholder: 'Tên khách hàng' },
+  {
+    key: 'status',
+    label: 'Trạng thái',
+    type: 'select',
+    multiple: true,
+    options: STATUSES.map((status) => ({ label: tagLabel[status] ?? status, value: status })),
+  },
+  { key: 'createdAt', label: 'Ngày tạo', type: 'dateRange' },
+]
+
+// Fetcher demo lọc tại chỗ (chạy offline); trang thật gọi useApi và backend nhận query.filters.
+async function fetchOrders(query: { page: number; pageSize: number; filters?: Record<string, unknown> }) {
+  const { customer, status, createdAt } = query.filters ?? {}
+  const items = ORDERS.filter((order) => {
+    if (typeof customer === 'string' && !order.customer.toLowerCase().includes(customer.toLowerCase())) {
+      return false
+    }
+    if (Array.isArray(status) && !status.includes(order.status)) return false
+    if (Array.isArray(createdAt)) {
+      const [from, to]: unknown[] = createdAt
+      if (typeof from === 'string' && order.createdAt < from) return false
+      if (typeof to === 'string' && order.createdAt > to) return false
+    }
+    return true
+  })
+  const start = (query.page - 1) * query.pageSize
+  return { items: items.slice(start, start + query.pageSize), total: items.length }
+}
+
+const { dataSource, loading, pagination, filterValues, onChange, onFilter } = useTable(fetchOrders, {
+  pageSize: 5,
+  filters: { status: ['pending'] },
+})
 </script>
 
 <template>
@@ -191,11 +245,15 @@ const tagLabel: Record<string, string> = {
       </CForm>
     </CCard>
 
-    <!-- Table: khung trang danh sách (tiêu đề + toolbar + phân trang chuẩn) -->
+    <!-- Table: khung trang danh sách (tiêu đề + toolbar + phân trang chuẩn + bộ lọc drawer qua useTable) -->
     <CTable
       title="Bảng dữ liệu (CTable)"
       :columns="columns"
-      :data-source="rows"
+      :data-source="dataSource"
+      :loading="loading"
+      :pagination="pagination"
+      :filter-fields="filterFields"
+      :filter-values="filterValues"
       row-key="id"
       show-create
       show-search
@@ -203,6 +261,8 @@ const tagLabel: Record<string, string> = {
       show-export
       show-reload
       show-column-setting
+      @change="onChange"
+      @update:filter-values="onFilter"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">

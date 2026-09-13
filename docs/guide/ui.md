@@ -16,11 +16,11 @@ không cần import.
 |---|---|---|
 | `CButton` | Nút đa biến thể, gradient thương hiệu | `variant` (`primary`/`secondary`/`outline`/`ghost`/`danger`/`link`/`text`), `size` (`sm`/`md`/`lg`), `block` |
 | `CCard` | Thẻ nội dung, có chế độ thu gọn | `title`, `collapsible`, `defaultOpen`, `borderless`; slot `#title`, `#actions` |
-| `CTable` | Bảng trang danh sách: khung + toolbar + phân trang chuẩn (xem mục CTable bên dưới) | `title`, `show-create`/`show-search`/`show-filter`/`show-export`/`show-reload`/`show-column-setting`, `filterCount`, `v-model:searchValue`, `v-model:hiddenColumns`, `striped`, `collapsible`; slot `#title`, `#toolbar`; forward toàn bộ props/slot/sự kiện `a-table` |
+| `CTable` | Bảng trang danh sách: khung + toolbar + bộ lọc drawer + phân trang chuẩn (xem mục CTable bên dưới) | `title`, `show-create`/`show-search`/`show-filter`/`show-export`/`show-reload`/`show-column-setting`, `filterFields`, `v-model:filterValues`, `filterCount`, `v-model:searchValue`, `v-model:hiddenColumns`, `striped`, `collapsible`; slot `#title`, `#toolbar`, `#filterField`; forward toàn bộ props/slot/sự kiện `a-table` |
 | `CForm` | Form (mặc định `layout="vertical"`) | forward props `a-form` |
 | `CPageHeader` | Tiêu đề trang + breadcrumb | `title`, `subTitle`, `breadcrumb[]`; event `@navigate`; slot `#extra` |
 | `CStatistic` | Thẻ chỉ số KPI | `label`, `value`, `trend`, `accent`; slot `#icon`, `#suffix` |
-| `CTag` | Nhãn pill semantic | `color` (`default`/`primary`/`accent`/`success`/`warning`/`error`/`info`), `dot` |
+| `CTag` | Nhãn pill semantic | `color` (`default`/`primary`/`accent`/`success`/`warning`/`error`/`info`), `dot`, `closable` + `closeText` (nhãn đọc màn hình của nút ✕); event `@close` |
 | `CStatus` | Chỉ báo active/inactive | `status`, `activeValue`, `activeText`, `inactiveText`, `showText` |
 | `CEmpty` | Trạng thái rỗng | `description`, `bordered`; slot `#image`, default (actions) |
 | `CInputCurrency` | Ô nhập tiền tệ (1.234.567,89 ↔ số) | `v-model:value` (number) |
@@ -57,14 +57,24 @@ nguyên vẹn nên bind thẳng với `useTable` như trước.
 
 ```vue
 <script setup lang="ts">
+import type { TableFilterField } from '@antadmin/ui'
+
 const api = useApi()
 const { can } = usePermission()
 const keyword = ref('')
-// activeFilters, filterOpen, openCreate, exportExcel, onAction… là state/hàm của trang.
-const { dataSource, loading, pagination, query, onChange, reload } = useTable<Vehicle>(
+// openCreate, exportExcel, onAction… là hàm của trang.
+const { dataSource, loading, pagination, query, filterValues, onChange, onFilter, reload } = useTable<Vehicle>(
   (q) => api('/vehicles', { query: { ...q, keyword: keyword.value } }),
-  { pageSize: 25 },
+  { pageSize: 25, filters: { status: 1 } }, // bộ lọc mặc định (tuỳ chọn)
 )
+
+// Trường lọc cũng do trang khai báo (như columns) — xem mục "Bộ lọc dựng sẵn" bên dưới.
+const filterFields: TableFilterField[] = [
+  { key: 'code', label: 'Mã xe', type: 'input' },
+  { key: 'brand', label: 'Hãng xe', type: 'select', options: BRAND_OPTIONS, multiple: true },
+  { key: 'status', label: 'Trạng thái', type: 'select', options: STATUS_OPTIONS },
+  { key: 'updatedAt', label: 'Ngày cập nhật', type: 'dateRange' },
+]
 
 const columns = [
   // STT/cột thao tác là cột của trang — tự dựng.
@@ -86,14 +96,15 @@ const columns = [
     :data-source="dataSource"
     :loading="loading"
     :pagination="pagination"
-    :filter-count="activeFilters"
+    :filter-fields="filterFields"
+    :filter-values="filterValues"
     :show-create="can('/vehicles/create')"
     show-search show-filter show-export show-reload show-column-setting
     @change="onChange"
+    @update:filter-values="onFilter"
     @search="reload"
     @reload="reload"
     @create="openCreate"
-    @filter="filterOpen = true"
     @export="exportExcel"
   >
     <template #bodyCell="{ column, record }">
@@ -117,7 +128,10 @@ const columns = [
 | `title` / slot `#title` | `''` | Tiêu đề bên trái header |
 | `show-create`, `create-text` | `false`, `Thêm mới` | Nút primary → `@create` |
 | `show-search`, `v-model:search-value`, `search-placeholder` | `false`, `''`, `Tìm kiếm...` | `@search(value)` khi Enter hoặc bấm nút xoá (không tự debounce) |
-| `show-filter`, `filter-text`, `filter-count` | `false`, `Lọc`, `0` | `@filter`; `filter-count > 0` hiện chấm đỏ — trang tự mở drawer/panel lọc |
+| `show-filter`, `filter-text` | `false`, `Lọc` | Nút Lọc → `@filter`; có `filter-fields` thì mở drawer lọc dựng sẵn |
+| `filter-fields`, `v-model:filter-values` | —, — | Bộ lọc dựng sẵn: drawer + thanh điều kiện lọc (xem bên dưới); không bind `filter-values` thì CTable tự giữ state |
+| slot `#filterField="{ field, values }"` | — | Control cho trường `type: 'custom'` — `v-model:value="values[field.key]"` |
+| `filter-count` | `0` | Chấm đỏ trên nút Lọc khi trang tự làm drawer/panel lọc; có `filter-fields` thì tự đếm, bỏ qua prop này |
 | `show-export`, `show-reload` | `false` | Nút tròn → `@export`, `@reload`; icon tải lại xoay khi `loading` |
 | `show-column-setting`, `v-model:hidden-columns` | `false`, — | Popover ẩn/hiện cột; key cột = `key` → `dataIndex`. Bind v-model nếu muốn lưu lựa chọn (localStorage…) |
 | slot `#toolbar` | — | Chèn nút riêng vào đầu toolbar |
@@ -127,6 +141,39 @@ const columns = [
 - `pagination` của trang được gộp với mặc định (`showTotal` "Tổng số dòng N", `showSizeChanger`,
   cỡ `default`) — ghi đè từng key; `:pagination="false"` để tắt.
 - `class`/`style` gắn vào khung ngoài; slot `#title` là tiêu đề khung (không còn forward xuống `a-table`).
+
+### Bộ lọc dựng sẵn (drawer + thanh điều kiện lọc)
+
+Truyền `filter-fields` (cùng `show-filter`) → bấm **Lọc** mở drawer chứa form lọc; điều kiện đang áp
+dụng hiện thành thẻ ngay trên bảng, bấm ✕ để bỏ từng điều kiện hoặc **Xoá tất cả**. Không truyền
+`filter-fields` → nút Lọc chỉ phát `@filter` như trước (trang tự làm drawer, tự đếm `filter-count`).
+
+| `type` | Control | Giá trị trong `filterValues` | Hiển thị trên thẻ |
+|---|---|---|---|
+| `input` | Ô nhập (Enter = Áp dụng) | chuỗi (đã trim) | chuỗi |
+| `select` | Select tìm theo nhãn; `options: { label, value }[]`, `multiple` | `value` hoặc mảng `value` | nhãn option, nối bằng dấu phẩy |
+| `date` | DatePicker | `'YYYY-MM-DD'` | `DD/MM/YYYY` |
+| `dateRange` | RangePicker | `['YYYY-MM-DD', 'YYYY-MM-DD']` | `DD/MM/YYYY – DD/MM/YYYY` |
+| `custom` | Slot `#filterField` | tuỳ control | `format(value)` nếu có, không thì chuỗi của giá trị |
+
+Mọi trường có `key`, `label`, `placeholder?` và `format?: (value) => string` (ghi đè chữ hiển thị trên
+thẻ — nên khai báo khi giá trị custom là object).
+
+- **Drawer làm việc trên bản nháp**: sửa chưa ảnh hưởng bảng; **Áp dụng** mới phát
+  `update:filterValues` rồi đóng; đóng drawer (✕, click nền, Esc) là bỏ nháp; **Đặt lại** chỉ xoá nháp
+  (vẫn cần Áp dụng). Đóng drawer thì focus trở về nút Lọc.
+- Giá trị phát ra đã bỏ trường rỗng (`''`, `null`, `[]`, khoảng ngày trống); `0` và `false` vẫn là điều
+  kiện hợp lệ. Chấm đỏ + `aria-label` của nút Lọc đếm theo số điều kiện đang áp dụng.
+- Key có giá trị nhưng không khai báo trong `filter-fields` (vd đọc từ URL) vẫn có thẻ, nhãn là key —
+  không có "lọc ngầm".
+- Trường `custom` mà thiếu slot `#filterField` → lỗi `[@antadmin/ui]` ngay khi dựng bảng.
+- Với `useTable`: bind `:filter-values="filterValues"` + `@update:filter-values="onFilter"` — bộ lọc được
+  gộp với filter cột của `a-table` vào `query.filters` (xem [Composables](/guide/composables#usetable)).
+  Trang tự viết `@change` (không dùng `useTable`) phải tự gộp, vì `a-table` phát lại filter cột mỗi lần
+  đổi trang.
+- `query.filters` là object nên `useApi` gửi dạng JSON trong query string (`filters=%7B…%7D`); backend
+  cần dạng khác (vd `status=1&brand=GEELY`) thì chuyển đổi trong fetcher.
+- `CFilterBar` vẫn dùng cho vài control lọc đặt ngang phía trên bảng; nhiều trường → dùng drawer.
 
 ## Re-export có kiểm soát (primitive antdv)
 

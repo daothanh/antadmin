@@ -49,6 +49,41 @@ describe('useTable', () => {
     expect(fetcher).toHaveBeenCalledTimes(1)
   })
 
+  it('onFilter thay bộ lọc form, về trang 1, load với filters; filterValues phản ánh bộ lọc form', async () => {
+    const fetcher = makeFetcher()
+    const t = useTable(fetcher, { immediate: false })
+    t.query.page = 4
+    await t.onFilter({ status: 1, brand: ['GEELY'] })
+    expect(t.query.page).toBe(1)
+    expect(t.filterValues.value).toEqual({ status: 1, brand: ['GEELY'] })
+    expect(fetcher).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1, filters: { status: 1, brand: ['GEELY'] } }),
+    )
+  })
+
+  it('đổi trang sau khi lọc → giữ bộ lọc form, gộp filter cột (trùng key thì form thắng)', async () => {
+    const fetcher = makeFetcher()
+    const t = useTable(fetcher, { immediate: false })
+    await t.onFilter({ status: 1 })
+    await t.onChange({ current: 2 }, { status: null, dept: ['kt'] })
+    expect(t.query.page).toBe(2)
+    expect(t.query.filters).toEqual({ status: 1, dept: ['kt'] })
+
+    // Bỏ hết bộ lọc form → chỉ còn filter cột; bỏ cả filter cột → undefined như trước.
+    await t.onFilter({})
+    expect(t.query.filters).toEqual({ status: null, dept: ['kt'] })
+    await t.onChange({ current: 1 })
+    expect(t.query.filters).toBeUndefined()
+  })
+
+  it('options.filters → bộ lọc mặc định có ngay ở lần load đầu', async () => {
+    const fetcher = makeFetcher()
+    const t = useTable(fetcher, { filters: { status: 1 } })
+    await nextTick()
+    expect(t.filterValues.value).toEqual({ status: 1 })
+    expect(fetcher).toHaveBeenCalledWith(expect.objectContaining({ filters: { status: 1 } }))
+  })
+
   it('reload đưa page về 1', async () => {
     const fetcher = makeFetcher()
     const t = useTable(fetcher, { immediate: false })

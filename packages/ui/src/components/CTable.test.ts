@@ -1,7 +1,8 @@
 /* eslint-disable vue/one-component-per-file -- nhiều stub antd trong 1 file test */
-import { h } from 'vue'
+import { h, isProxy, nextTick, reactive } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
+import type { TableFilterField } from '../internal/filter'
 
 // Stub primitive antdv thành DOM tối giản để test logic wrapper (header/toolbar, ẩn cột,
 // phân trang, forward slot) mà không kéo render antd nặng. CCard/CButton dùng stub này luôn.
@@ -168,6 +169,36 @@ vi.mock('ant-design-vue', async () => {
   })
 
   return { Badge, Button, Card, Checkbox, Collapse, CollapsePanel, Input, Popover, Table, Tooltip }
+})
+
+// Drawer lọc có test riêng — ở đây chỉ cần props vào, sự kiện ra và slot của trường custom.
+vi.mock('../internal/CTableFilterDrawer.vue', async () => {
+  const { defineComponent, h } = await import('vue')
+  return {
+    default: defineComponent({
+      name: 'CTableFilterDrawer',
+      props: {
+        open: Boolean,
+        fields: { type: Array, default: () => [] },
+        values: { type: Object, default: () => ({}) },
+      },
+      emits: ['update:open', 'apply'],
+      setup: (props, { slots }) => () =>
+        props.open
+          ? h(
+              'aside',
+              { class: 'filter-drawer' },
+              (props.fields as { key: string; type: string }[]).map((field) =>
+                h(
+                  'div',
+                  { 'data-field': field.key },
+                  field.type === 'custom' ? slots.field?.({ field, values: props.values }) : undefined,
+                ),
+              ),
+            )
+          : null,
+    }),
+  }
 })
 
 import CTable from './CTable.vue'
@@ -419,5 +450,157 @@ describe('CTable — phân trang & dòng xen kẽ', () => {
     const plain = mount(CTable, { attrs: { columns, dataSource: rows, 'row-class-name': 'hang' } })
     expect(plain.findAll('tbody tr').map((tr) => tr.classes())).toEqual([['hang'], ['hang'], ['hang']])
     expect(tableOf(mount(CTable, { attrs: { columns } })).props('rowClassName')).toBeUndefined()
+  })
+})
+
+describe('CTable — bộ lọc dựng sẵn', () => {
+  const filterFields: TableFilterField[] = [
+    {
+      key: 'dept',
+      label: 'Phòng ban',
+      type: 'select',
+      multiple: true,
+      options: [
+        { label: 'Kỹ thuật', value: 'kt' },
+        { label: 'Vận hành', value: 'vh' },
+      ],
+    },
+    { key: 'joinedAt', label: 'Ngày vào', type: 'dateRange' },
+    { key: 'name', label: 'Tên', type: 'input' },
+  ]
+  const JOINED = ['2026-09-01', '2026-09-13']
+
+  function drawerOf(w: Wrapper) {
+    return w.findComponent({ name: 'CTableFilterDrawer' })
+  }
+  function conditionTexts(w: Wrapper) {
+    return w.findAll('.c-table__filter-list li').map((li) => li.text())
+  }
+  function removeButtons(w: Wrapper) {
+    return w.findAll('.c-table__filter-list button')
+  }
+
+  it('không có filterFields → bấm Lọc chỉ emit filter, không có drawer/thanh điều kiện (hành vi cũ)', async () => {
+    const w = mount(CTable, { props: { showFilter: true, filterValues: { name: 'An' } } })
+    await buttonByText(w, 'Lọc').trigger('click')
+    expect(w.emitted('filter')).toHaveLength(1)
+    expect(drawerOf(w).exists()).toBe(false)
+    expect(w.find('.c-table__filters').exists()).toBe(false)
+    expect(buttonByText(w, 'Lọc').attributes('aria-haspopup')).toBeUndefined()
+  })
+
+  it('có filterFields → bấm Lọc mở drawer (vẫn emit filter), drawer nhận trường + bộ lọc đang áp dụng', async () => {
+    const w = mount(CTable, { props: { showFilter: true, filterFields, filterValues: { name: 'An' } } })
+    expect(drawerOf(w).props('open')).toBe(false)
+    expect(buttonByText(w, 'Lọc').attributes('aria-haspopup')).toBe('dialog')
+    await buttonByText(w, 'Lọc').trigger('click')
+    expect(w.emitted('filter')).toHaveLength(1)
+    expect(drawerOf(w).props()).toMatchObject({ open: true, fields: filterFields, values: { name: 'An' } })
+  })
+
+  it('Áp dụng → emit update:filterValues, hiện thẻ điều kiện; badge đếm theo điều kiện, bỏ qua filterCount', async () => {
+    const w = mount(CTable, { props: { showFilter: true, filterFields, filterCount: 5 } })
+    expect(w.find('.c-table__filters').exists()).toBe(false)
+    expect(w.find('.badge').attributes('data-dot')).toBe('false')
+
+    drawerOf(w).vm.$emit('apply', { dept: ['kt', 'vh'], joinedAt: JOINED })
+    await nextTick()
+    expect(w.emitted('update:filterValues')?.at(-1)).toEqual([{ dept: ['kt', 'vh'], joinedAt: JOINED }])
+    expect(conditionTexts(w)).toEqual([
+      'Phòng ban: Kỹ thuật, Vận hành',
+      'Ngày vào: 01/09/2026 – 13/09/2026',
+    ])
+    expect(removeButtons(w)[0]!.attributes('aria-label')).toBe('Bỏ lọc Phòng ban: Kỹ thuật, Vận hành')
+    expect(w.find('.badge').attributes('data-dot')).toBe('true')
+    expect(buttonByText(w, 'Lọc').attributes('aria-label')).toBe('Lọc (đang áp dụng 2 bộ lọc)')
+    // Không bind v-model → CTable tự giữ bộ lọc đã áp dụng cho lần mở drawer sau.
+    expect(drawerOf(w).props('values')).toEqual({ dept: ['kt', 'vh'], joinedAt: JOINED })
+  })
+
+  it('bấm ✕ trên thẻ → bỏ điều kiện đó, focus sang thẻ kế; bỏ thẻ cuối → focus về nút Lọc', async () => {
+    const w = mount(CTable, {
+      props: { showFilter: true, filterFields, filterValues: { name: 'An', dept: ['kt'], joinedAt: JOINED } },
+      attachTo: document.body,
+    })
+    expect(conditionTexts(w)).toEqual(['Phòng ban: Kỹ thuật', 'Ngày vào: 01/09/2026 – 13/09/2026', 'Tên: An'])
+
+    await removeButtons(w)[0]!.trigger('click')
+    await flushPromises()
+    expect(w.emitted('update:filterValues')?.at(-1)).toEqual([{ name: 'An', joinedAt: JOINED }])
+    expect(conditionTexts(w)).toEqual(['Ngày vào: 01/09/2026 – 13/09/2026', 'Tên: An'])
+    expect(document.activeElement).toBe(removeButtons(w)[0]!.element)
+
+    await removeButtons(w)[1]!.trigger('click')
+    await flushPromises()
+    expect(document.activeElement).toBe(removeButtons(w)[0]!.element)
+
+    await removeButtons(w)[0]!.trigger('click')
+    await flushPromises()
+    expect(w.emitted('update:filterValues')?.at(-1)).toEqual([{}])
+    expect(w.find('.c-table__filters').exists()).toBe(false)
+    expect(document.activeElement).toBe(buttonByText(w, 'Lọc').element)
+    w.unmount()
+  })
+
+  it('Xoá tất cả → emit {} + ẩn thanh điều kiện + focus về nút Lọc', async () => {
+    const w = mount(CTable, {
+      props: { showFilter: true, filterFields, filterValues: { name: 'An', dept: ['kt'] } },
+      attachTo: document.body,
+    })
+    await buttonByText(w, 'Xoá tất cả').trigger('click')
+    await flushPromises()
+    expect(w.emitted('update:filterValues')?.at(-1)).toEqual([{}])
+    expect(w.find('.c-table__filters').exists()).toBe(false)
+    expect(document.activeElement).toBe(buttonByText(w, 'Lọc').element)
+    w.unmount()
+  })
+
+  it('đóng drawer → focus trả về nút Lọc', async () => {
+    const w = mount(CTable, { props: { showFilter: true, filterFields }, attachTo: document.body })
+    await buttonByText(w, 'Lọc').trigger('click')
+    drawerOf(w).vm.$emit('update:open', false)
+    await flushPromises()
+    expect(drawerOf(w).props('open')).toBe(false)
+    expect(document.activeElement).toBe(buttonByText(w, 'Lọc').element)
+    w.unmount()
+  })
+
+  it('giá trị phát ra khi bỏ thẻ là object thường, kể cả khi trang truyền object reactive', async () => {
+    const filterValues = reactive({ dept: ['kt', 'vh'], name: 'An' })
+    const w = mount(CTable, { props: { filterFields, filterValues } })
+    await removeButtons(w)[1]!.trigger('click')
+    const [emitted] = w.emitted<[Record<string, unknown>]>('update:filterValues')!.at(-1)!
+    expect(emitted).toEqual({ dept: ['kt', 'vh'] })
+    expect(isProxy(emitted.dept)).toBe(false)
+  })
+
+  it('filterValues controlled đồng bộ theo prop; key không khai báo vẫn có thẻ (nhãn = key)', async () => {
+    const w = mount(CTable, { props: { filterFields, filterValues: { name: 'An' } } })
+    expect(conditionTexts(w)).toEqual(['Tên: An'])
+    await w.setProps({ filterValues: { dealerId: 'D01', name: '' } })
+    expect(conditionTexts(w)).toEqual(['dealerId: D01'])
+    await w.setProps({ filterValues: undefined })
+    expect(w.find('.c-table__filters').exists()).toBe(false)
+  })
+
+  it('slot #filterField render trong drawer cho trường custom, không forward xuống a-table', async () => {
+    const w = mount(CTable, {
+      props: { showFilter: true, filterFields: [{ key: 'dealer', label: 'Đại lý', type: 'custom' }] },
+      slots: {
+        filterField: ({ field }: { field: TableFilterField }) => h('i', { class: 'dealer-picker' }, field.label),
+      },
+    })
+    await buttonByText(w, 'Lọc').trigger('click')
+    expect(w.find('.filter-drawer .dealer-picker').text()).toBe('Đại lý')
+    expect(w.find('[data-slot=filterField]').exists()).toBe(false)
+  })
+
+  it('trường custom thiếu slot #filterField → báo lỗi dùng sai API', () => {
+    // Vue in cảnh báo "Unhandled error" trước khi ném lại lỗi — tắt để log test gọn.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(() =>
+      mount(CTable, { props: { filterFields: [{ key: 'dealer', label: 'Đại lý', type: 'custom' }] } }),
+    ).toThrow('[@antadmin/ui] CTable: trường lọc type "custom" cần slot #filterField')
+    warn.mockRestore()
   })
 })

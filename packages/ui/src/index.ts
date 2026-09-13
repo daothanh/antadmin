@@ -19,6 +19,7 @@ export type { BreadcrumbRoute } from './components/CPageHeader.vue'
 export { default as CStatistic } from './components/CStatistic.vue'
 export { default as CStatus } from './components/CStatus.vue'
 export { default as CTable } from './components/CTable.vue'
+export type { TableFilterField, TableFilterOption, TableFilterValues } from './internal/filter'
 export { default as CTag } from './components/CTag.vue'
 export { default as CTopNav } from './components/CTopNav.vue'
 
