@@ -1,5 +1,20 @@
 # @antadmin/cli
 
+## 2.0.0
+
+### Major Changes
+
+- 1bec556: eslint: nâng lên ESLint 10 (major)
+  
+  - `@antadmin/eslint-config` chỉ hỗ trợ ESLint 10 — peer dependency `eslint@^10`; bộ deps nâng đồng bộ (`@eslint/js` 10, `eslint-plugin-vue` 10, `vue-eslint-parser` 10, `typescript-eslint` 8.69+). Yêu cầu Node >= 20.19.
+  - Template scaffold của `@antadmin/cli` cài `eslint@^10` và `engines.node >= 20.19`.
+  - Recommended configs mới có thể báo thêm lỗi (no-unassigned-vars, no-useless-assignment, preserve-caught-error, vue/block-order...); chạy lại `pnpm lint` sau khi nâng cấp.
+  - Migration: xem Migration Guide `v1 → v2`.
+
+### Patch Changes
+
+- d4bbd28: docs: chuyển tài liệu framework từ Cloudflare Pages sang GitHub Pages — cập nhật URL docs trong template scaffold (`templates/app/CLAUDE.md`)
+
 ## 1.3.1
 
 ## 1.3.0
