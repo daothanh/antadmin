@@ -137,6 +137,52 @@ a {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+ * Nút primary danger thuần antdv (vd `okButtonProps: { danger: true }` của Modal/Popconfirm) — cả hai theme.
+ * antdv tô nền bằng colorError: theme tối nó trộn seed error (màu chữ, sáng) nên chữ trắng chỉ ~3.6:1; theme sáng lúc hover
+ * nền colorErrorHover sáng hơn (~4.2:1). Dùng chung gradient-danger + hover với CButton danger (≥ 4.5:1 kể cả khi hover).
+ * ───────────────────────────────────────────────────────────────────────── */
+.ant-btn-primary.ant-btn-dangerous:not(:disabled):not(.ant-btn-disabled):not(.ant-btn-background-ghost):not(.c-btn) {
+  background: var(--antadmin-gradient-danger) !important;
+}
+.ant-btn-primary.ant-btn-dangerous:not(:disabled):not(.ant-btn-disabled):not(.ant-btn-background-ghost):not(.c-btn):hover {
+  filter: brightness(1.08);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Chữ màu primary / error do antdv tự vẽ — theme tối.
+ * antdv trộn seed 85% với #141414 nên chữ colorPrimary (#627dbe) chỉ ~4:1 trên surface, colorError (#d66363) ~4.1:1 trên
+ * surface-elevated; token primary/error đã ≥ 4.5:1 nên dùng lại. Phủ chỗ core dùng: trang đang chọn của Pagination (CTable),
+ * tab đang chọn, item danger của Dropdown (menu thao tác dòng — hover nền gradient-danger như nút danger). Chỗ antdv khác còn
+ * chữ màu suy ra mà core chưa dùng nên chưa phủ (vd Radio.Button đang chọn, item đang chọn của Dropdown, chữ lỗi Form trong
+ * Modal/Drawer, số của Badge).
+ * ───────────────────────────────────────────────────────────────────────── */
+:root[data-theme='dark'] .ant-pagination:not(.ant-pagination-disabled) .ant-pagination-item-active {
+  border-color: var(--antadmin-color-primary) !important;
+}
+:root[data-theme='dark'] .ant-pagination:not(.ant-pagination-disabled) .ant-pagination-item-active a {
+  color: var(--antadmin-color-primary) !important;
+}
+:root[data-theme='dark'] .ant-pagination:not(.ant-pagination-disabled) .ant-pagination-item-active:hover {
+  border-color: var(--antadmin-color-primary-hover) !important;
+}
+:root[data-theme='dark'] .ant-pagination:not(.ant-pagination-disabled) .ant-pagination-item-active:hover a {
+  color: var(--antadmin-color-primary-hover) !important;
+}
+:root[data-theme='dark'] .ant-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--antadmin-color-primary) !important;
+}
+:root[data-theme='dark'] .ant-tabs .ant-tabs-ink-bar {
+  background: var(--antadmin-color-primary) !important;
+}
+:root[data-theme='dark'] .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item-danger:not(.ant-dropdown-menu-item-disabled) {
+  color: var(--antadmin-color-error) !important;
+}
+:root[data-theme='dark'] .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item-danger:not(.ant-dropdown-menu-item-disabled):hover {
+  color: #fff !important;
+  background: var(--antadmin-gradient-danger) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
  * MẬT ĐỘ COMPONENT (padding / margin) — chỉnh tập trung qua density tokens
  * (@antadmin/theme → biến --antadmin-*). Dùng global CSS vì ant-design-vue 4.x bỏ
  * qua theme.components. Height của control đã set qua global token controlHeight*.
@@ -197,9 +243,9 @@ a {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Sidebar nav (CSideNav) — SAO Y override OneAuto (#left-side-menu trong
+ * Sidebar nav (CSideNav) — dựa trên override OneAuto (#left-side-menu trong
  * main.css): menu trong suốt (sider lo gradient), chữ + icon trắng UPPERCASE,
- * item con thụt 35px bo tròn pill, hover/selected nền cam #ff9800.
+ * item con thụt 35px bo tròn pill, hover/selected nền cam accent chữ navy.
  * ───────────────────────────────────────────────────────────────────────── */
 .c-sidenav.ant-menu-dark,
 .c-sidenav.ant-menu-dark .ant-menu-sub {
@@ -226,16 +272,29 @@ a {
   padding-left: 15px !important;
   border-radius: 9999px !important;
 }
-/* Hover & active đều nền cam, chữ trắng. */
+/* Hover & active đều nền cam. Chữ + icon trên nền cam dùng navy của sidebar: chữ trắng trên cam chỉ ~2:1, navy ≥ 7:1 ở
+ * cả hai theme. */
 .c-sidenav .ant-menu-item:hover,
 .c-sidenav .ant-menu-item-selected {
   background-color: var(--antadmin-color-accent) !important;
-  color: #fff !important;
+  color: var(--antadmin-color-sidebar-bottom) !important;
+}
+.c-sidenav .ant-menu-item:hover .ant-menu-title-content,
+.c-sidenav .ant-menu-item:hover .tabler-icon,
+.c-sidenav .ant-menu-item:hover .anticon,
+.c-sidenav .ant-menu-item-selected .ant-menu-title-content,
+.c-sidenav .ant-menu-item-selected .tabler-icon,
+.c-sidenav .ant-menu-item-selected .anticon {
+  color: var(--antadmin-color-sidebar-bottom) !important;
 }
 /* Khi thu gọn: submenu cha đang chọn nền cam. */
 .c-sidenav.ant-menu-inline-collapsed .ant-menu-submenu-selected > .ant-menu-submenu-title {
   background-color: var(--antadmin-color-accent) !important;
-  color: #fff !important;
+  color: var(--antadmin-color-sidebar-bottom) !important;
+}
+.c-sidenav.ant-menu-inline-collapsed .ant-menu-submenu-selected > .ant-menu-submenu-title .tabler-icon,
+.c-sidenav.ant-menu-inline-collapsed .ant-menu-submenu-selected > .ant-menu-submenu-title .anticon {
+  color: var(--antadmin-color-sidebar-bottom) !important;
 }
 
 /* Top nav (CTopNav) — menu module ngang: UPPERCASE bold navy #253264, active

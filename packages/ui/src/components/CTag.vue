@@ -96,17 +96,18 @@ const classes = computed(() => ['c-tag', `c-tag--${props.color}`])
   background: var(--antadmin-color-primary-soft);
   color: var(--antadmin-color-primary);
 }
+/* accent/success/warning là màu nền (và seed antdv), làm chữ trên nền soft ở theme sáng chưa tới 4.5:1 → dùng biến *-text. */
 .c-tag--accent {
   background: var(--antadmin-color-accent-soft);
-  color: var(--antadmin-color-accent);
+  color: var(--antadmin-color-accent-text);
 }
 .c-tag--success {
   background: var(--antadmin-color-success-soft);
-  color: var(--antadmin-color-success);
+  color: var(--antadmin-color-success-text);
 }
 .c-tag--warning {
   background: var(--antadmin-color-warning-soft);
-  color: var(--antadmin-color-warning);
+  color: var(--antadmin-color-warning-text);
 }
 .c-tag--error {
   background: var(--antadmin-color-error-soft);

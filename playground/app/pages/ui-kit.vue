@@ -1,11 +1,13 @@
 <script setup lang="ts">
 // Trang showcase bộ UI/UX AntAdmin — public để xem nhanh không cần đăng nhập.
+import { CDropdown, CMenu, CMenuItem, CTabPane, CTabs } from '@antadmin/ui'
 import type { TableFilterField } from '@antadmin/ui'
 
 definePageMeta({ auth: false })
 
 const amount = ref<number | null>(1250000)
 const rate = ref<string>('8.5')
+const activeTab = ref('all')
 
 const cardTypes = ['default', 'primary', 'outline', 'filled', 'ghost'] as const
 
@@ -198,6 +200,12 @@ const { dataSource, loading, pagination, filterValues, onChange, onFilter } = us
           Primary
         </CTag>
         <CTag
+          color="accent"
+          dot
+        >
+          Accent
+        </CTag>
+        <CTag
           color="success"
           dot
         >
@@ -230,6 +238,47 @@ const { dataSource, loading, pagination, filterValues, onChange, onFilter } = us
           :status="0"
           show-text
         />
+      </div>
+    </CCard>
+
+    <!-- Tab + menu thao tác dòng: chữ màu primary/error do antdv tự vẽ (base.css chỉnh lại ở theme tối) -->
+    <CCard title="Tab & menu thao tác">
+      <div style="display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+        <CTabs v-model:active-key="activeTab">
+          <CTabPane
+            key="all"
+            tab="Tất cả"
+          />
+          <CTabPane
+            key="pending"
+            tab="Chờ duyệt"
+          />
+          <CTabPane
+            key="done"
+            tab="Hoàn thành"
+          />
+        </CTabs>
+        <CDropdown :trigger="['click']">
+          <CButton
+            variant="outline"
+            size="sm"
+          >
+            Thao tác
+          </CButton>
+          <template #overlay>
+            <CMenu>
+              <CMenuItem key="edit">
+                Sửa
+              </CMenuItem>
+              <CMenuItem
+                key="delete"
+                danger
+              >
+                Xoá
+              </CMenuItem>
+            </CMenu>
+          </template>
+        </CDropdown>
       </div>
     </CCard>
 

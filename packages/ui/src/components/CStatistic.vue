@@ -78,17 +78,18 @@ const trendText = computed(() =>
   background: var(--antadmin-color-primary-soft);
   color: var(--antadmin-color-primary);
 }
+/* Icon có thể là ký tự (vd "₫") nên cần ≥ 4.5:1 như chữ → accent/success/warning dùng biến *-text. */
 .c-stat--accent .c-stat__icon {
   background: var(--antadmin-color-accent-soft);
-  color: var(--antadmin-color-accent);
+  color: var(--antadmin-color-accent-text);
 }
 .c-stat--success .c-stat__icon {
   background: var(--antadmin-color-success-soft);
-  color: var(--antadmin-color-success);
+  color: var(--antadmin-color-success-text);
 }
 .c-stat--warning .c-stat__icon {
   background: var(--antadmin-color-warning-soft);
-  color: var(--antadmin-color-warning);
+  color: var(--antadmin-color-warning-text);
 }
 .c-stat--error .c-stat__icon {
   background: var(--antadmin-color-error-soft);
@@ -129,7 +130,7 @@ const trendText = computed(() =>
   font-weight: 600;
 }
 .c-stat__trend--up {
-  color: var(--antadmin-color-success);
+  color: var(--antadmin-color-success-text);
 }
 .c-stat__trend--down {
   color: var(--antadmin-color-error);

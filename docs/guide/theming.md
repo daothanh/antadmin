@@ -31,6 +31,22 @@ export default defineAppConfig({
 .box { color: var(--antadmin-color-primary); border-radius: var(--antadmin-radius); }
 ```
 
+### Cặp chữ / nền đạt tương phản AA
+
+Các cặp dưới đây đạt ≥ 4.5:1 ở cả theme sáng lẫn tối. CSS riêng của dự án nên dùng đúng cặp:
+
+| Mục đích | Màu chữ | Nền |
+|---|---|---|
+| Chữ/icon màu accent, success, warning | `--antadmin-color-{accent,success,warning}-text` | `--antadmin-color-*-soft`, `--antadmin-color-surface` |
+| Chữ/icon màu primary, error, info | `--antadmin-color-{primary,error,info}` | `--antadmin-color-*-soft`, `--antadmin-color-surface` |
+| Chữ trên nền cam accent | `--antadmin-color-sidebar-bottom` | `--antadmin-color-accent` |
+| Chữ trắng trên nền primary | `#fff` | `--antadmin-color-primary-active` |
+| Chữ trắng trên nền danger | `#fff` | `--antadmin-gradient-danger` |
+
+- `accent`, `success`, `warning` là màu nền. Làm chữ trên nền sáng thì không đủ 4.5:1, nên dùng biến `*-text`.
+  `success`/`warning` giữ nguyên giá trị vì còn là seed của antdv.
+- Ở theme tối, `primary` là màu chữ nên không đặt chữ trắng lên nó được; hãy dùng `primary-active`.
+
 ## Font chữ (Quicksand + Montserrat)
 
 Layer tích hợp sẵn **`@nuxt/fonts`** — tự **self-host** (tải về, phục vụ qua `/_fonts/`, không gọi

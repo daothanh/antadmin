@@ -63,8 +63,9 @@ const label = computed(() => (isActive.value ? props.activeText : props.inactive
   background: var(--antadmin-color-error);
   box-shadow: 0 0 0 3px var(--antadmin-color-error-soft);
 }
+/* Chấm là đồ hoạ (≥ 3:1) nên giữ success; chữ cần ≥ 4.5:1 → success-text. */
 .c-status--active .c-status__text {
-  color: var(--antadmin-color-success);
+  color: var(--antadmin-color-success-text);
 }
 .c-status--inactive .c-status__text {
   color: var(--antadmin-color-error);
