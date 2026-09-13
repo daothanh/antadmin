@@ -147,7 +147,8 @@ export const lightTokens: AntAdminTokens = {
     errorSoft: '#fff1f0',
     info: '#0f4c81',
     infoSoft: '#e8f2ff',
-    link: '#1576f4',
+    // ≥ 4.5:1 trên surface, surfaceMuted, page và linkSoft (#1576f4 cũ chỉ 4.26:1 trên surface).
+    link: '#1068d6',
     linkSoft: '#e8f2ff',
 
     text: '#10213f',
@@ -182,8 +183,10 @@ export const lightTokens: AntAdminTokens = {
 
 export const darkTokens: AntAdminTokens = {
   color: {
-    primary: '#4f76d1',
-    primaryHover: '#7b98df',
+    // Nền tối đảo vai trò: primary/primaryHover là màu CHỮ/icon (≥ 4.5:1 trên primarySoft, surface, surfaceElevated) nên
+    // quá sáng để đặt chữ trắng lên; nền có chữ trắng dùng primaryActive (≥ 7:1) — xem base.css và gradientPrimary.
+    primary: '#7090dc',
+    primaryHover: '#94ade6',
     primaryActive: '#35549e',
     primarySoft: '#1a2740',
 
@@ -225,7 +228,8 @@ export const darkTokens: AntAdminTokens = {
   controlHeight: 36,
   density,
   spacingUnit: 8,
-  gradientPrimary: 'linear-gradient(135deg, #35549e, #4f76d1)',
+  // Không dùng primary làm điểm cuối: chữ trắng của CButton primary phải ≥ 4.5:1 dọc cả dải (kể cả khi hover sáng lên).
+  gradientPrimary: 'linear-gradient(135deg, #35549e, #4466b8)',
   gradientDanger: 'linear-gradient(135deg, #f43f5e, #f87171)',
   shadowCard: '0 12px 28px rgba(0, 0, 0, 0.35)',
   shadowRaised: '0 18px 40px rgba(0, 0, 0, 0.5)',

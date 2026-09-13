@@ -500,7 +500,7 @@ function stopInCollapse(event: Event) {
           v-for="(condition, position) in activeFilters"
           :key="condition.key"
         >
-          <!-- info: đạt tương phản AA ở cả theme sáng lẫn tối (primary/primary-soft ở theme tối chưa đạt). -->
+          <!-- info: đạt tương phản AA ở cả theme sáng lẫn tối. -->
           <CTag
             color="info"
             closable

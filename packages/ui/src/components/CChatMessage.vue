@@ -56,7 +56,8 @@ withDefaults(defineProps<{
   word-break: break-word;
 }
 .c-chat-msg--user .c-chat-msg__bubble {
-  background: var(--antadmin-color-primary);
+  /* primary-active: ở theme tối primary là màu chữ (sáng), chữ trắng trên nó chỉ ~3:1; primary-active ≥ 7:1 ở cả hai theme. */
+  background: var(--antadmin-color-primary-active);
   color: #fff;
   border-bottom-right-radius: var(--antadmin-radius);
 }

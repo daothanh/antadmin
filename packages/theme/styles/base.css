@@ -42,6 +42,10 @@ a {
   background: var(--antadmin-color-primary-soft);
   color: var(--antadmin-color-primary-active);
 }
+/* Theme tối: primary-active là tông nền (tối) → chữ đang bôi chọn trên primary-soft chỉ ~2:1; đổi sang tông primary sáng nhất. */
+:root[data-theme='dark'] ::selection {
+  color: var(--antadmin-color-primary-hover);
+}
 
 /* Scrollbar mảnh, đồng nhất giữa các trang. */
 ::-webkit-scrollbar {
@@ -85,6 +89,16 @@ a {
 .ant-table-wrapper .ant-table-thead th.ant-table-column-sort {
   background: var(--antadmin-color-primary-active) !important;
 }
+/* Theme tối: primary là màu chữ (sáng), chữ trắng trên nó chỉ ~3:1 → header dùng primary-active; cột đang sort/hover
+ * phủ thêm lớp tối để vẫn tối hơn header một nấc như theme sáng. */
+:root[data-theme='dark'] .ant-table-wrapper .ant-table-thead > tr > th,
+:root[data-theme='dark'] .ant-table-wrapper .ant-table-thead > tr > td {
+  background: var(--antadmin-color-primary-active) !important;
+}
+:root[data-theme='dark'] .ant-table-wrapper .ant-table-thead th.ant-table-column-has-sorters:hover,
+:root[data-theme='dark'] .ant-table-wrapper .ant-table-thead th.ant-table-column-sort {
+  background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), var(--antadmin-color-primary-active) !important;
+}
 /* Hàng được chọn dùng nền info-soft thay vì xám mặc định. */
 .ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td {
   background: var(--antadmin-color-info-soft) !important;
@@ -99,6 +113,27 @@ a {
 /* Tab đang chọn in đậm cho dễ nhận biết. */
 .ant-tabs-tab-active .ant-tabs-tab-btn {
   font-weight: 700;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Nền primary chữ trắng do antdv tự vẽ — theme tối.
+ * antdv suy màu nền từ seed `colorPrimary` (trộn 85% với #141414 ở theme tối). Primary theme tối là màu chữ (sáng) nên
+ * chữ trắng trên nền suy ra chỉ ~4:1, không seed nào đạt ≥ 4.5:1 cho cả hai vai trò → nút primary thuần antdv
+ * (Modal.confirm của useConfirm, nút Gửi của CChat…) và ô ngày đang chọn của DatePicker/RangePicker dùng primary-active.
+ * CButton có gradient riêng nên loại trừ. Chỗ antdv khác còn nền colorPrimary + chữ trắng mà core chưa dùng nên chưa phủ
+ * (vd Steps, Radio solid, Tag checkable, Menu theme dark, Badge.Ribbon).
+ * ───────────────────────────────────────────────────────────────────────── */
+:root[data-theme='dark'] .ant-btn-primary:not(:disabled):not(.ant-btn-disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost):not(.c-btn) {
+  background: var(--antadmin-color-primary-active) !important;
+}
+/* Nền bị ghim bằng !important nên hover báo hiệu bằng độ sáng (giống CButton). */
+:root[data-theme='dark'] .ant-btn-primary:not(:disabled):not(.ant-btn-disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost):not(.c-btn):hover {
+  filter: brightness(1.12);
+}
+:root[data-theme='dark'] .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
+:root[data-theme='dark'] .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+:root[data-theme='dark'] .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
+  background: var(--antadmin-color-primary-active) !important;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -127,6 +162,11 @@ a {
 }
 .c-card-primary .c-card__title {
   color: #ffffff !important;
+}
+/* Theme tối: chữ trắng trên primary (sáng) chỉ ~3:1 → header nền primary-active. */
+:root[data-theme='dark'] .c-card-primary > .ant-card-head,
+:root[data-theme='dark'] .c-card-primary .ant-collapse-header {
+  background: var(--antadmin-color-primary-active);
 }
 /* Type: outline — header gạch dưới primary, không nền; tiêu đề primary. */
 .c-card-outline > .ant-card-head,
