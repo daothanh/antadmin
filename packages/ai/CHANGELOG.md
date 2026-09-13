@@ -1,5 +1,12 @@
 # @antadmin/ai
 
+## 2.0.0
+
+### Patch Changes
+
+- Updated dependencies [f5d4680]
+  - @antadmin/utils@2.0.0
+
 ## 1.3.1
 
 ### Patch Changes

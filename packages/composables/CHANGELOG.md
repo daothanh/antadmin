@@ -1,5 +1,59 @@
 # @antadmin/composables
 
+## 2.0.0
+
+### Minor Changes
+
+- 793f68a: CTable có bộ lọc dựng sẵn: drawer chứa form lọc + thanh điều kiện lọc phía trên bảng; useTable giữ bộ lọc khi đổi trang
+  
+  - **@antadmin/ui — `CTable`**: prop `filterFields` (trang khai báo trường lọc như `columns`: `input`, `select`
+    (`options`, `multiple`), `date`, `dateRange`, `custom` qua slot `#filterField`; `format` để tuỳ chữ hiển thị) +
+    `v-model:filterValues`. Bấm **Lọc** mở drawer làm việc trên bản nháp (Áp dụng / Đặt lại; đóng là bỏ nháp); điều kiện
+    đang áp dụng hiện thành thẻ ngay trên bảng, bấm ✕ bỏ từng điều kiện hoặc **Xoá tất cả**. Chấm đỏ của nút Lọc tự đếm
+    theo số điều kiện; focus trả về nút Lọc khi đóng drawer / bỏ thẻ cuối. Export type `TableFilterField`,
+    `TableFilterOption`, `TableFilterValues`.
+    - Không truyền `filterFields` → hành vi cũ giữ nguyên (`@filter`, `filterCount`).
+    - Trường `type: 'custom'` thiếu slot `#filterField` → ném lỗi `[@antadmin/ui]` khi dựng bảng.
+  - **@antadmin/ui — `CTag`**: thêm `closable` + `closeText` (nhãn đọc màn hình), sự kiện `close`; nút ✕ là `<button>`
+    thao tác được bằng bàn phím.
+  - **@antadmin/composables — `useTable`**: thêm `onFilter(values)` (bind `@update:filter-values`, về trang 1 rồi tải
+    lại), `filterValues` (bind `:filter-values`) và `options.filters` (bộ lọc mặc định). `query.filters` = filter cột của
+    `a-table` gộp với bộ lọc form (trùng key thì form thắng) — trước đây `onChange` ghi đè `query.filters` bằng filter cột
+    mỗi lần đổi trang.
+- f5d4680: CTable có drawer Thiết lập: đổi thứ tự/ẩn cột, sắp xếp mặc định, lưu localStorage theo từng bảng
+  
+  - **@antadmin/ui — `CTable`**: nút ⚙ (`show-column-setting`) mở drawer **Thiết lập** thay cho popover ẩn/hiện cột.
+    Tab *Hiển thị cột*: kéo thả hoặc nút ↑↓ (bàn phím/cảm ứng), công tắc Hiện/Ẩn; cột `fixed` chỉ đổi thứ tự trong nhóm,
+    cột `title: ''` giữ nguyên vị trí. Tab *Khác*: sắp xếp mặc định (cột có `sorter` + chiều). Làm việc trên bản nháp
+    (Lưu lại / Đặt lại, đóng là bỏ nháp), focus trả về nút Thiết lập khi đóng.
+    - Prop `settingsKey`: lưu `localStorage['antadmin:table:<settingsKey>']` — mỗi bảng một khoá nên nhiều CTable trên một
+      trang không ghi đè nhau; thiết lập cũ tự hợp nhất khi `columns` đổi; dữ liệu hỏng/khác version bị bỏ qua.
+    - `v-model:settings` (`TableSettings`) thay cho `v-model:hiddenColumns` (chưa phát hành).
+    - Lưu sắp xếp mặc định mới → CTable phát `@change` (action `sort`, về trang 1) như khi bấm tiêu đề cột. `change` nay là
+      emit khai báo của CTable (có type) nên lỗi từ handler async (vd `useTable.onChange`) đi qua error handler của Vue.
+    - Khi dùng thiết lập, CTable điều khiển `sortOrder` của cột `sorter` để chỉ báo khớp sắp xếp đang áp dụng (trừ khi
+      trang tự khai báo `sortOrder`, dùng `sorter.multiple` hoặc có cột nhóm).
+    - Có `settingsKey`/`settings` mà cột cấu hình được thiếu `key` lẫn `dataIndex` → ném lỗi `[@antadmin/ui]`.
+    - Export type `TableSettings`, `TableSort`, `TableSortOrder`. Footer drawer Lọc đổi thành hai nút chia đôi cho đồng bộ.
+  - **@antadmin/composables — `useTable`**: `options.settingsKey` (cùng khoá với CTable) — lần load đầu theo sắp xếp mặc
+    định đã lưu. `onChange` nhận đúng dạng sorter của a-table: mảng (nhiều cột) lấy cột đầu, `dataIndex` lồng nối `.`, bỏ
+    sắp xếp (không có `order`) thì xoá `sortField`/`sortOrder` — trước đây vẫn gửi `sortField`.
+  - **@antadmin/utils**: `getTableSettings` / `setTableSettings` / `clearTableSettings` (storage truyền vào được; storage bị
+    chặn thì không ném lỗi), `parseTableSettings` (kiểm tra dữ liệu không tin cậy), `tableSettingsKeyOf`, `isTableSortOrder`;
+    type `TableSettings`, `TableSort`, `TableSortOrder`, `TableSettingsStorage`.
+
+### Patch Changes
+
+- Updated dependencies [5b8d509]
+- Updated dependencies [f5d4680]
+- Updated dependencies [0f9f389]
+- Updated dependencies [ce392cf]
+- Updated dependencies [c6eaaa6]
+- Updated dependencies [087dcf0]
+- Updated dependencies [979286d]
+  - @antadmin/theme@2.0.0
+  - @antadmin/utils@2.0.0
+
 ## 1.3.1
 
 ### Patch Changes
