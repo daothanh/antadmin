@@ -66,7 +66,9 @@ Khuôn theo `CStatus.test.ts`: Vitest + `@vue/test-utils`.
 1. `packages/ui/src/index.ts` — `export { default as <Tên> } from './components/<Tên>.vue'`
    (đúng khối "Component thương hiệu AntAdmin", giữ thứ tự alphabet). Export kèm type nếu có
    (`export type { ... }`).
-2. `packages/ui/src/install.ts` — thêm import + thêm vào object `components` (để layer đăng ký global).
+2. `packages/ui/src/install.ts` — thêm import + thêm vào **cả type lẫn object** `components` (để layer đăng ký
+   global). Type khai báo tường minh `<Tên>: typeof <Tên>` — để suy luận thì d.ts in lại cả cây type component và
+   build fail ở chốt chặn `typeof import(...)` trong `vite.config.ts`.
 3. `packages/nuxt-layer-base/antadmin.d.ts` — thêm vào import từ `@antadmin/ui` VÀ vào
    `interface GlobalComponents` (để IDE/vue-tsc nhận diện component global trong app sản phẩm).
 

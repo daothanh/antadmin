@@ -20,7 +20,27 @@ import CTopNav from './components/CTopNav.vue'
 // Map các component "thương hiệu AntAdmin" (có style riêng) để đăng ký global.
 // Primitive antdv re-export ở index.ts không đăng ký global (đã có a-* từ
 // @ant-design-vue/nuxt) — tránh trùng và giữ bundle gọn.
-export const components = {
+// Type khai báo tường minh: để TS tự suy luận thì d.ts in lại nguyên cây type từng component, trong đó có
+// `typeof import('vue').nextTick` mà api-extractor làm rơi `typeof` → d.ts publish lỗi (xem vite.config.ts).
+export const components: {
+  CAppLayout: typeof CAppLayout
+  CButton: typeof CButton
+  CCard: typeof CCard
+  CChat: typeof CChat
+  CChatMessage: typeof CChatMessage
+  CEmpty: typeof CEmpty
+  CFilterBar: typeof CFilterBar
+  CForm: typeof CForm
+  CSideNav: typeof CSideNav
+  CInputCurrency: typeof CInputCurrency
+  CInputPercent: typeof CInputPercent
+  CPageHeader: typeof CPageHeader
+  CStatistic: typeof CStatistic
+  CStatus: typeof CStatus
+  CTable: typeof CTable
+  CTag: typeof CTag
+  CTopNav: typeof CTopNav
+} = {
   CAppLayout,
   CButton,
   CCard,
