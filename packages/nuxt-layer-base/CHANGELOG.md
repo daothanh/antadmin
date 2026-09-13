@@ -24,6 +24,24 @@
 
 ### Patch Changes
 
+- 665a925: Sửa trang `/auth/login` mặc định không hiện form đăng nhập: đổi tên file component của layer từ `TascoLoginForm.vue` thành `AntAdminLoginForm.vue`
+
+  - **Lỗi ở 1.3.1**: `pages/auth/login.vue` và docs dùng `<AntAdminLoginForm>`, nhưng file component lại tên
+    `TascoLoginForm.vue`. Nuxt auto-import theo tên file nên chỉ đăng ký `<TascoLoginForm>`; trang login mặc định không
+    render được form.
+  - Dự án đã tự tạo `pages/auth/login.vue` và gọi `<TascoLoginForm>` để lách lỗi → đổi sang `<AntAdminLoginForm>`, vì tên
+    cũ không còn.
+  - Client mock của `GET /auth/clients` (khi `NUXT_AUTH_MOCK=true`) đổi mã thành `OCM`/`CUS`, cấu trúc response giữ nguyên.
+    `NUXT_PUBLIC_AUTH_DEFAULT_CLIENT_CODE` còn đặt theo mã mock cũ (`OAP_OCM`/`OAP_CUS`) sẽ không khớp nữa, và form chọn
+    client đầu tiên.
+
+  _Bổ sung sau khi phát hành: commit không kèm changeset nên changelog tự sinh của 2.0.0 thiếu mục này._
+
+- 09b97e8: `footerText` mặc định trong `app.config.ts` của layer đổi từ `© Tập đoàn AntAdmin` thành `© AntAdmin`. Dự án đã
+  khai báo `antadmin.footerText` không bị ảnh hưởng.
+
+  _Bổ sung sau khi phát hành, cùng lý do như trên._
+
 - Updated dependencies [793f68a]
 - Updated dependencies [5b8d509]
 - Updated dependencies [f5d4680]
