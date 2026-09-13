@@ -191,26 +191,30 @@ const tagLabel: Record<string, string> = {
       </CForm>
     </CCard>
 
-    <!-- Table -->
-    <CCard title="Bảng dữ liệu (CTable)">
-      <CTable
-        :columns="columns"
-        :data-source="rows"
-        row-key="id"
-        :pagination="false"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'status'">
-            <CTag
-              :color="tagColor[record.status]"
-              dot
-            >
-              {{ tagLabel[record.status] }}
-            </CTag>
-          </template>
+    <!-- Table: khung trang danh sách (tiêu đề + toolbar + phân trang chuẩn) -->
+    <CTable
+      title="Bảng dữ liệu (CTable)"
+      :columns="columns"
+      :data-source="rows"
+      row-key="id"
+      show-create
+      show-search
+      show-filter
+      show-export
+      show-reload
+      show-column-setting
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'status'">
+          <CTag
+            :color="tagColor[record.status]"
+            dot
+          >
+            {{ tagLabel[record.status] }}
+          </CTag>
         </template>
-      </CTable>
-    </CCard>
+      </template>
+    </CTable>
 
     <!-- Empty -->
     <CCard title="Trạng thái rỗng (CEmpty)">

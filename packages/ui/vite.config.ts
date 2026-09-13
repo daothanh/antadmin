@@ -16,7 +16,14 @@ export default defineConfig({
     },
     rollupOptions: {
       // Không bundle vào thư viện — consumer cung cấp qua peer/deps.
-      external: ['vue', 'ant-design-vue', /^ant-design-vue\//, '@antadmin/theme', '@antadmin/utils'],
+      external: [
+        'vue',
+        'ant-design-vue',
+        /^ant-design-vue\//,
+        '@antadmin/theme',
+        '@antadmin/utils',
+        '@tabler/icons-vue',
+      ],
     },
   },
 })

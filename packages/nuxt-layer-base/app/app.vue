@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { theme } from 'ant-design-vue'
+import viVN from 'ant-design-vue/es/locale/vi_VN'
 import { getAntdTheme, cssVarsText } from '@antadmin/theme'
 
-// ConfigProvider áp theme AntAdmin cho toàn app (1 chỗ duy nhất).
-// Lưu ý: nếu team override app.vue, cần tự thêm lại <a-config-provider>.
+// ConfigProvider áp theme AntAdmin + locale vi_VN của antdv cho toàn app (1 chỗ duy nhất).
+// Lưu ý: nếu team override app.vue, cần tự thêm lại <a-config-provider> (theme + locale).
 // `mode` phản ứng theo useThemeMode (cookie) → đổi sáng/tối tại runtime.
 const { mode } = useThemeMode()
 
@@ -20,7 +21,10 @@ useHead({
 </script>
 
 <template>
-  <a-config-provider :theme="antdTheme">
+  <a-config-provider
+    :theme="antdTheme"
+    :locale="viVN"
+  >
     <NuxtLoadingIndicator color="#FF9800" />
     <NuxtLayout>
       <NuxtPage />

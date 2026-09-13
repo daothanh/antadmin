@@ -29,7 +29,8 @@
   },
   "dependencies": {
     "@antadmin/theme": "workspace:*",
-    "@antadmin/utils": "workspace:*"
+    "@antadmin/utils": "workspace:*",
+    "@tabler/icons-vue": "^3.41.1"
   },
   "peerDependencies": {
     "ant-design-vue": "^4.2.0",

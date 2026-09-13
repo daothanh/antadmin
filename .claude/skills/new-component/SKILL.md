@@ -31,7 +31,8 @@ Theo đúng khuôn các component hiện có (xem `CStatus.vue` làm mẫu chu�
   không hardcode mã màu. Cần token mới → thêm vào `@antadmin/theme` trước.
 - KHÔNG cấu hình style qua `theme.components` của ConfigProvider — antd-vue bỏ qua nó;
   override antdv bằng global CSS trong theme nếu thật sự cần.
-- Không thêm dependency icon/lib mới — giữ @antadmin/ui gọn (ưu tiên CSS thuần như chấm của CStatus).
+- Icon dùng `@tabler/icons-vue` (đã là dependency của @antadmin/ui, cùng bộ icon với app/template) —
+  không thêm thư viện icon/lib khác; chi tiết đơn giản ưu tiên CSS thuần (như chấm của CStatus).
 
 ## Bước 2 — Stories: `<Tên>.stories.ts` (bắt buộc)
 

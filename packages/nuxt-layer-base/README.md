@@ -11,7 +11,7 @@ export default defineNuxtConfig({
 ```
 
 ## Layer cung cấp
-- **Theme/UI**: `app.vue` bọc `<a-config-provider>` áp `@antadmin/theme`; plugin `app.use(AntAdminUI)` đăng ký `C*`; inject CSS vars `--antadmin-*`. SSR style qua `@ant-design-vue/nuxt`.
+- **Theme/UI**: `app.vue` bọc `<a-config-provider>` áp `@antadmin/theme` + locale `vi_VN` của antdv; plugin `app.use(AntAdminUI)` đăng ký `C*`; inject CSS vars `--antadmin-*`. SSR style qua `@ant-design-vue/nuxt`.
 - **Auth (BFF + abstract)**: plugin cung cấp `$antadminAuth` (mặc định OIDC), khởi tạo user state. Middleware `auth.global` (redirect login) + `permission.global` (route meta `permissions`).
 - **Composables auto-import**: `useApi/useAuth/usePermission/useTable`.
 - **Nitro BFF**:

@@ -16,7 +16,7 @@ import {
 
 ## Áp theme
 
-Layer tự bọc `<a-config-provider>` với token + algorithm và inject CSS vars `--antadmin-*`. Đổi chế độ
+Layer tự bọc `<a-config-provider>` với token + algorithm + locale `vi_VN` và inject CSS vars `--antadmin-*`. Đổi chế độ
 mặc định qua `app.config.ts`:
 
 ```ts

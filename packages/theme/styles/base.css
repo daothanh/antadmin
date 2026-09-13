@@ -72,9 +72,9 @@ a {
   padding-block: var(--antadmin-table-cell-padding-block, 8px) !important;
   padding-inline: var(--antadmin-table-cell-padding-inline, 8px) !important;
 }
-/* Bỏ vạch ngăn dọc mặc định giữa các cột header (cho liền mạch). */
+/* Vạch ngăn dọc giữa các cột header: trắng mờ, đủ rõ trên nền primary. */
 .ant-table-wrapper .ant-table-thead > tr > th::before {
-  background-color: rgba(255, 255, 255, 0.25) !important;
+  background-color: rgba(255, 255, 255, 0.6) !important;
 }
 /* Icon sort/filter trên header chuyển sáng để hợp nền tối. */
 .ant-table-wrapper .ant-table-thead .ant-table-column-sorter,
@@ -89,8 +89,9 @@ a {
 .ant-table-wrapper .ant-table-tbody > tr.ant-table-row-selected > td {
   background: var(--antadmin-color-info-soft) !important;
 }
-/* Ô gọn hơn cho mật độ dữ liệu cao. */
-.ant-table-wrapper .ant-table-tbody > tr > td {
+/* Ô gọn hơn cho mật độ dữ liệu cao. Chừa hàng đo cột (measure-row, antdv chèn khi bảng có
+ * scroll/sticky) — nếu bị cộng padding sẽ thành khoảng trống 16px ngay dưới header. */
+.ant-table-wrapper .ant-table-tbody > tr:not(.ant-table-measure-row) > td {
   padding-block: var(--antadmin-table-cell-padding-block, 8px) !important;
   padding-inline: var(--antadmin-table-cell-padding-inline, 8px) !important;
 }

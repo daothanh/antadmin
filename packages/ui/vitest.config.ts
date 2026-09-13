@@ -26,6 +26,7 @@ export default defineConfig({
         'src/components/CFilterBar.vue',
         'src/components/CForm.vue',
         'src/components/CTable.vue',
+        'src/internal/table.ts',
         'src/useConfirm.ts',
         'src/useErrorHandler.ts',
       ],
