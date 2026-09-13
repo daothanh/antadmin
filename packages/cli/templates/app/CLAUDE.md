@@ -37,6 +37,9 @@ Dev không có IAM thật: đặt `NUXT_AUTH_MOCK=true` trong `.env` để bỏ 
   lấy user info qua `useAuth()`.
 - **Package framework**: các package `@antadmin/*` public được cài từ npmjs mặc định, không cần
   thêm registry override hoặc token npm.
+- **pnpm chặn build script của dependency**: thêm dependency có build script mà chưa quyết định `true`/`false` trong
+  `allowBuilds` của `pnpm-workspace.yaml` thì `pnpm install` fail `ERR_PNPM_IGNORED_BUILDS` (Docker/CI fail theo).
+  Chỉ cho chạy với package tin cậy. Dùng đúng bản pnpm pin ở `packageManager`.
 
 ## Tính năng AI (opt-in)
 

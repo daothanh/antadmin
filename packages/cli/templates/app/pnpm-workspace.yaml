@@ -1,0 +1,14 @@
+# Setting cài đặt của pnpm đặt ở file này (pnpm 11+ không đọc field "pnpm" trong package.json).
+# App là project đơn nên không khai báo "packages".
+#
+# pnpm 11+ mặc định chặn build script (postinstall…) của dependency, và `pnpm install` thoát lỗi
+# ERR_PNPM_IGNORED_BUILDS khi còn package chưa được quyết định — Docker/CI fail theo. Mỗi entry là
+# một quyết định tường minh: true = cho chạy, false = chặn mà không báo lỗi. Khi thêm dependency có
+# build script, pnpm tự ghi placeholder vào đây: đổi thành true/false (hoặc `pnpm approve-builds`).
+allowBuilds:
+  # Binary native của esbuild (Vite/Nitro dùng khi dev/build).
+  esbuild: true
+  # File watcher native mà Nuxt dùng nếu được cài thêm (optional peer của nuxt).
+  '@parcel/watcher': true
+  # Chỉ in thông báo quyên góp, không cần chạy.
+  core-js: false

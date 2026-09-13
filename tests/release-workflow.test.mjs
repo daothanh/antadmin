@@ -136,3 +136,33 @@ test('S-REGR-04: docs deploy lên GitHub Pages, không dùng Cloudflare', () => 
   assert.match(config, /base:\s*'\/antadmin\/'/)
   assert.doesNotMatch(config, /web\.docs\.vtii\.vn/)
 })
+
+test('S-REGR-05: app scaffold cài và typecheck được ngoài monorepo với pnpm 12', () => {
+  const rootManifest = JSON.parse(read('package.json'))
+  const layer = JSON.parse(read('packages/nuxt-layer-base/package.json'))
+  const templatePackage = JSON.parse(read('packages/cli/templates/app/package.json'))
+  const templateWorkspace = read('packages/cli/templates/app/pnpm-workspace.yaml')
+  const templateDockerfile = read('packages/cli/templates/app/Dockerfile')
+
+  // pnpm 11+ fail ERR_PNPM_IGNORED_BUILDS khi dependency có build script chưa được quyết định.
+  assert.match(templateWorkspace, /^allowBuilds:\n(?: {2}.*\n)* {2}esbuild: true$/m)
+  assert.match(templateWorkspace, /^ {2}core-js: false$/m)
+  // pnpm 11+ bỏ qua các setting cũ này, chép từ cấu hình pnpm 10 sang sẽ không có tác dụng.
+  assert.doesNotMatch(templateWorkspace, /onlyBuiltDependencies|neverBuiltDependencies/)
+  const copyWorkspaceAt = templateDockerfile.search(/^COPY .*\bpnpm-workspace\.yaml\b/m)
+  // Bỏ qua dòng comment: comment trong Dockerfile cũng nhắc tới `pnpm install`.
+  const installAt = templateDockerfile.search(/^(?!\s*#).*\bpnpm install\b/m)
+  assert.ok(copyWorkspaceAt !== -1 && copyWorkspaceAt < installAt, 'Dockerfile phải copy pnpm-workspace.yaml trước pnpm install')
+  assert.equal(templatePackage.packageManager, rootManifest.packageManager, 'template pin cùng bản pnpm core đang dùng')
+
+  // App typecheck thẳng source server của layer → layer tự mang type Node, không trông vào hoist.
+  assert.ok(layer.dependencies['@types/node'], 'layer phải khai báo @types/node trong dependencies')
+  const serverDir = new URL('../packages/nuxt-layer-base/server/', import.meta.url)
+  const nodeSources = readdirSync(serverDir, { recursive: true })
+    .filter(file => file.endsWith('.ts') && !file.endsWith('.test.ts'))
+    .filter(file => /from 'node:|\bBuffer\b|\bprocess\./.test(readFileSync(new URL(file, serverDir), 'utf8')))
+  assert.ok(nodeSources.length > 0)
+  for (const file of nodeSources) {
+    assert.match(readFileSync(new URL(file, serverDir), 'utf8'), /^\/\/\/ <reference types="node" \/>$/m, file)
+  }
+})

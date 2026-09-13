@@ -27,6 +27,7 @@
     "@antadmin/theme": "workspace:*",
     "@antadmin/ui": "workspace:*",
     "@antadmin/utils": "workspace:*",
+    "@types/node": "^22.10.5",
     "ant-design-vue": "4.2.6"
   },
   "peerDependencies": {
