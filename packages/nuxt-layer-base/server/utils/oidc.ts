@@ -1,3 +1,6 @@
+// App sản phẩm typecheck thẳng source layer: tự tham chiếu type Node (@types/node là dependency
+// của layer) thay vì trông vào app có cài sẵn hay được hoist.
+/// <reference types="node" />
 import { createHash, randomBytes } from 'node:crypto'
 import type { AuthUser } from '@antadmin/composables'
 

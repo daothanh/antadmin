@@ -4,10 +4,13 @@
 FROM node:24-alpine AS base
 
 WORKDIR /app
+# corepack cài đúng bản pnpm pin ở "packageManager" trong package.json.
 RUN corepack enable
 
 # Cài dependencies trước để tận dụng cache layer (frozen = tái lập từ pnpm-lock.yaml).
-COPY package.json pnpm-lock.yaml .npmrc ./
+# pnpm-workspace.yaml phải có mặt trước `pnpm install`: thiếu allowBuilds thì pnpm 11+ fail
+# ERR_PNPM_IGNORED_BUILDS.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 # cache mount: cache tải gói nằm lại trên host build giữa các lần build.
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm config set store-dir /root/.local/share/pnpm/store && \

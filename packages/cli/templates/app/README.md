@@ -9,8 +9,11 @@ pnpm install
 pnpm dev
 ```
 
-> Lần đầu `pnpm install` có thể hiện `ERR_PNPM_IGNORED_BUILDS` (vô hại — dev/build vẫn chạy).
-> Nếu muốn bật build script (vd native file-watcher), chạy `pnpm approve-builds` rồi chọn.
+> Dùng pnpm theo bản pin ở `packageManager` (`corepack enable` tự chọn đúng bản).
+> `pnpm-workspace.yaml` đã quyết định sẵn build script (`allowBuilds`) cho dependency của template. Thêm dependency
+> có build script thì `pnpm install` báo `ERR_PNPM_IGNORED_BUILDS` và ghi placeholder vào file đó: đổi thành
+> `true`/`false` (hoặc chạy `pnpm approve-builds`) rồi commit, không thì Docker/CI cũng fail.
+> Đặt app vào một pnpm workspace có sẵn: xoá `pnpm-workspace.yaml` của app, chuyển `allowBuilds` lên workspace gốc.
 > Nếu gặp lỗi module lạ của nuxt sau khi đổi config, cài lại sạch:
 > `rm -rf node_modules .nuxt pnpm-lock.yaml && pnpm install`.
 

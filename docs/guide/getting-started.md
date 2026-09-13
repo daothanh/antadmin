@@ -12,8 +12,8 @@ pnpm install
 pnpm dev
 ```
 
-Project sinh ra đã `extends ['@antadmin/nuxt-layer-base']`, có `.npmrc` cho pnpm,
-`tsconfig`/`eslint` chuẩn, và CI/CD sẵn dùng (`.gitlab-ci.yml` + `Dockerfile` +
+Project sinh ra đã `extends ['@antadmin/nuxt-layer-base']`, có `.npmrc` + `pnpm-workspace.yaml` cho pnpm
+(pin bản pnpm ở `packageManager`), `tsconfig`/`eslint` chuẩn, và CI/CD sẵn dùng (`.gitlab-ci.yml` + `Dockerfile` +
 `docker-compose.*.yml` + `scripts/deploy-prod.sh`) — xem [Deploy](/guide/deploy).
 
 ## Cấu hình môi trường
@@ -41,6 +41,10 @@ export default defineNuxtConfig({
 ```
 
 Package framework được cài trực tiếp từ npmjs mặc định, không thêm scope registry hoặc token npm.
+
+Dùng pnpm 11+ thì khai báo `allowBuilds` trong `pnpm-workspace.yaml`, nếu không `pnpm install` fail
+`ERR_PNPM_IGNORED_BUILDS` vì dependency của Nuxt có build script (vd `esbuild`). Chép khối `allowBuilds` từ
+`pnpm-workspace.yaml` của template `@antadmin/cli` là đủ.
 
 ## Trang đầu tiên
 
