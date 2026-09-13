@@ -21,7 +21,7 @@ tuần. Xem [Cơ chế Feature Request](./docs/contributing/rfc.md#cơ-chế-fea
 ```bash
 pnpm install
 pnpm build        # build các package (turbo)
-pnpm dev          # playground (hoặc: pnpm --filter playground dev)
+pnpm dev          # playground + docs, tự build package phụ thuộc (chỉ playground: pnpm turbo run dev --filter=playground)
 ```
 
 ## Kiểm tra trước khi mở MR
