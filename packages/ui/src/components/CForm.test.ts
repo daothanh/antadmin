@@ -1,4 +1,3 @@
-/* eslint-disable vue/one-component-per-file -- stub antd trong 1 file test */
 import { defineComponent, h } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'

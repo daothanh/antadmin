@@ -1,4 +1,3 @@
-/* eslint-disable vue/one-component-per-file -- stub antd trong 1 file test */
 import { defineComponent, h } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -14,7 +13,7 @@ vi.mock('ant-design-vue', () => ({
   }),
   Textarea: defineComponent({
     name: 'ATextarea',
-    props: { value: String },
+    props: { value: { type: String, default: '' } },
     emits: ['update:value'],
     setup: (p, { emit }) => () =>
       h('textarea', {
@@ -24,7 +23,7 @@ vi.mock('ant-design-vue', () => ({
   }),
   Alert: defineComponent({
     name: 'AAlert',
-    props: { message: String },
+    props: { message: { type: String, default: '' } },
     setup: (p) => () => h('div', { class: 'stub-alert' }, p.message),
   }),
 }))

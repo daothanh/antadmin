@@ -18,7 +18,7 @@ vi.mock('ant-design-vue', async () => {
 
   const emits: string[] = ['close', 'update:value', 'update:checked']
 
-  // Một chỗ gọi defineComponent cho mọi stub (rule vue/one-component-per-file đếm theo lời gọi).
+  // Mọi stub dùng chung một khung defineComponent (emits + setup) nên mỗi stub chỉ khai báo tên, props và hàm render.
   function defineStub(name: string, props: string[], render: StubRender) {
     return defineComponent({
       name,
