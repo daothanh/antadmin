@@ -2,11 +2,9 @@ packages:
   - "packages/*"
   - "playground"
   - "docs"
+# Quyết định build script (postinstall) của dependency: true = cho chạy (dep tin cậy), false = chặn không báo lỗi.
+# pnpm 11+ chỉ đọc allowBuilds (bỏ qua onlyBuiltDependencies); dep chưa quyết định → ERR_PNPM_IGNORED_BUILDS.
 allowBuilds:
   '@parcel/watcher': true
   core-js: false
   esbuild: true
-# Cho phép chạy build script (postinstall) của các dep tin cậy.
-onlyBuiltDependencies:
-  - esbuild
-  - "@parcel/watcher"
