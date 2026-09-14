@@ -5,12 +5,9 @@ export default defineNuxtConfig({
   antd: {
     extractStyle: true,
   },
-  // DEV: bật mock (bỏ qua IAM/IdP thật) để chạy end-to-end.
+  // DEV: bật mock (bỏ qua IAM thật) để chạy end-to-end.
   runtimeConfig: {
     auth: {
-      mock: true,
-    },
-    oidc: {
       mock: true,
     },
   },
