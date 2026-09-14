@@ -4,8 +4,8 @@ interface SessionResponse {
   user: AuthUser | null
 }
 
-// Cung cấp AuthProvider (mặc định OIDC qua BFF) tại nuxtApp.$antadminAuth
-// và khởi tạo user state. Tập đoàn có thể thay provider khác sau.
+// Cung cấp AuthProvider (form đăng nhập first-party, BFF đổi credential lấy token IAM) tại
+// nuxtApp.$antadminAuth và khởi tạo user state. Tập đoàn có thể thay provider khác sau.
 export default defineNuxtPlugin(async () => {
   const requestFetch = useRequestFetch()
 
@@ -40,7 +40,7 @@ export default defineNuxtPlugin(async () => {
       })
     },
     handleCallback() {
-      // Callback xử lý hoàn toàn ở Nitro BFF (/auth/callback).
+      // Đăng nhập bằng form nên không có redirect callback từ IdP; giữ hàm cho đủ AuthProvider.
       return Promise.resolve(null)
     },
     async refresh() {
