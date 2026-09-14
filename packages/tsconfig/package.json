@@ -1,6 +1,6 @@
 {
   "name": "@antadmin/tsconfig",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Cấu hình TypeScript dùng chung cho framework AntAdmin",
   "license": "MIT",
   "files": [

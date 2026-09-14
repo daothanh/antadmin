@@ -1,6 +1,6 @@
 {
   "name": "@antadmin/ai",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Nền tảng AI dùng chung AntAdmin — composable chat streaming (client) + proxy Nitro tới AI gateway (server)",
   "license": "MIT",
   "type": "module",
