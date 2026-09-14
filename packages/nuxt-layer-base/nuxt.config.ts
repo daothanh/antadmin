@@ -75,7 +75,10 @@ export default defineNuxtConfig({
     session: {
       secret: '',
     },
-    // server-only — override qua env NUXT_OIDC_*, NUXT_API_PROXY_TARGET.
+    // server-only — override qua env NUXT_OIDC_*. Phần OIDC còn sót từ trước khi chuyển sang
+    // đăng nhập IAM (block `auth` bên dưới): chỉ /auth/logout (chuyển tới end_session_endpoint
+    // của IdP khi có issuer) và nhánh refresh token của /api/** còn đọc. Session IAM không giữ
+    // refresh token nên nhánh refresh không chạy.
     oidc: {
       issuer: '',
       clientId: '',
@@ -83,7 +86,8 @@ export default defineNuxtConfig({
       redirectUri: '',
       scopes: 'openid profile email',
       postLogoutRedirectUri: '',
-      // DEV: bỏ qua IdP, tạo session giả (đặt NUXT_OIDC_MOCK=true).
+      // Bỏ qua IdP khi logout/refresh token (NUXT_OIDC_MOCK=true). KHÔNG bỏ qua đăng nhập:
+      // dev không có IAM thì đặt NUXT_AUTH_MOCK=true.
       mock: false,
     },
     // ĐĂNG NHẬP BẰNG FORM (first-party). server-only — override qua NUXT_AUTH_*.
@@ -129,7 +133,7 @@ export default defineNuxtConfig({
       // DEV: bỏ qua IAM, tạo session giả (đặt NUXT_AUTH_MOCK=true).
       mock: false,
     },
-    // Backend gateway thật mà /api/** proxy tới.
+    // Backend gateway thật mà /api/** proxy tới. Override qua NUXT_API_PROXY_TARGET.
     apiProxyTarget: '',
     public: {
       // BFF: client gọi /api, Nitro proxy sang apiProxyTarget.

@@ -17,7 +17,7 @@ export async function getOidcMetadata(issuer: string): Promise<OidcMetadata> {
   const key = issuer.replace(/\/$/, '')
   const cached = metadataCache.get(key)
   if (cached) return cached
-  // Timeout để IdP treo không kéo theo request login/proxy treo vô hạn.
+  // Timeout để IdP treo không kéo theo request logout/proxy treo vô hạn.
   const metadata = await $fetch<OidcMetadata>(
     `${key}/.well-known/openid-configuration`,
     { timeout: 10_000 },
