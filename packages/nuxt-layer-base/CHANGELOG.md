@@ -1,5 +1,57 @@
 # @antadmin/nuxt-layer-base
 
+## 2.0.1
+
+### Patch Changes
+
+- c85195b: Sửa app scaffold bằng `create-antadmin-app` fail `pnpm install` và `pnpm typecheck` khi đặt ngoài monorepo (pnpm 12)
+  
+  Không đổi API và runtime. Lỗi có sẵn (tái hiện trên cả 1.3.1 và 2.0.0), làm script `check`, stage `check` của
+  `Dockerfile` và job check trong `.gitlab-ci.yml` của app mới fail ngay từ đầu. Monorepo không gặp vì có `allowBuilds` ở
+  `pnpm-workspace.yaml` gốc và `@types/node` được hoist từ package khác.
+  
+  - **`pnpm install` thoát lỗi `ERR_PNPM_IGNORED_BUILDS`** (`@antadmin/cli`): pnpm 11+ chặn build script của dependency và
+    fail khi còn package chưa được quyết định (`esbuild`, `core-js`). Template thêm `pnpm-workspace.yaml` khai báo
+    `allowBuilds` (`esbuild`, `@parcel/watcher` được chạy; `core-js` bị chặn), `Dockerfile` copy file này trước
+    `pnpm install --frozen-lockfile`. `package.json` pin `packageManager` cùng bản pnpm của core, để corepack trong Docker/CI
+    cài đúng bản thay vì bản mặc định của corepack.
+  - **`pnpm typecheck` báo TS2307 `node:crypto` và TS2591 `Buffer`** (`@antadmin/nuxt-layer-base`): app typecheck thẳng
+    source `server/utils/{session,iam,oidc}.ts` của layer nhưng không có type Node. Layer khai báo `@types/node` trong
+    `dependencies` và các file dùng API Node có `/// <reference types="node" />`, nên app không cần tự cài `@types/node`.
+    App tạo từ template cũ cũng hết lỗi sau khi nâng layer.
+  - App tạo từ template cũ vẫn fail `pnpm install` với pnpm 11+ cho tới khi chép `pnpm-workspace.yaml`, field
+    `packageManager` và dòng `COPY` trong `Dockerfile` từ template mới (sau đó chạy `pnpm install` để ghi bản pnpm vào
+    `pnpm-lock.yaml`).
+  - Test `S-REGR-05` (`pnpm test:release`) chặn tái phát: template thiếu `allowBuilds`/`packageManager`, `Dockerfile` không
+    copy `pnpm-workspace.yaml`, hoặc server util dùng API Node mà không tham chiếu type Node.
+- 23e8e2c: README và comment của `@antadmin/nuxt-layer-base` mô tả đúng đăng nhập IAM thay cho OIDC
+  
+  Không đổi API và runtime.
+  
+  - README: auth là form đăng nhập first-party, BFF đổi credential lấy token IAM. Liệt kê đúng các route `/auth/*` (bỏ
+    `/auth/callback` không tồn tại). Khối env dùng `NUXT_AUTH_BASE_URL` và `NUXT_AUTH_MOCK` thay cho `NUXT_OIDC_*` và
+    `NUXT_OIDC_MOCK`. Access token hết hạn thì phải đăng nhập lại, vì session IAM không giữ refresh token.
+  - `nuxt.config.ts`: comment của `apiProxyTarget` ghi tên env `NUXT_API_PROXY_TARGET`.
+  - Plugin `02.auth.ts`: bỏ comment nhắc OIDC là mặc định và callback ở `/auth/callback`.
+- d07e34a: Gỡ phần OIDC còn sót trong `@antadmin/nuxt-layer-base`
+  
+  Đăng nhập OIDC đã gỡ từ 1.2.0, sau đó layer đăng nhập bằng form first-party qua IAM. Phần OIDC giữ lại không còn tác dụng:
+  session IAM không lưu refresh token nên nhánh refresh ở `/api/**` không bao giờ chạy, và không có phiên IdP nào để
+  đăng xuất.
+  
+  - Xoá `server/utils/oidc.ts`. Nitro không còn auto-import `getOidcMetadata`, `generatePkce`, `randomState`,
+    `refreshAccessToken`, `mapUserInfo` và các type `Oidc*` sang app.
+  - Xoá `runtimeConfig.oidc`, nên env `NUXT_OIDC_*` (kể cả `NUXT_OIDC_MOCK`) không còn tác dụng.
+  - `/api/**`: access token hết hạn thì bỏ token để backend trả 401, không thử refresh.
+  - `/auth/logout`: xoá session rồi redirect về đường dẫn nội bộ, không chuyển tới end_session_endpoint của IdP.
+  - `AntAdminSession` bỏ field `refreshToken`.
+  - App tự dùng các hàm OIDC auto-import, đọc `useRuntimeConfig().oidc` hoặc truyền `refreshToken` vào
+    `setAntAdminSession` cần bỏ phần đó. Trong monorepo không có nơi nào dùng.
+- @antadmin/composables@2.0.1
+  - @antadmin/theme@2.0.1
+  - @antadmin/ui@2.0.1
+  - @antadmin/utils@2.0.1
+
 ## 2.0.0
 
 ### Minor Changes

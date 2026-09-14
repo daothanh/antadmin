@@ -1,5 +1,46 @@
 # @antadmin/cli
 
+## 2.0.1
+
+### Patch Changes
+
+- ee1f988: `create-antadmin-app` và README của template hướng dẫn bỏ qua đăng nhập khi dev bằng `NUXT_AUTH_MOCK=true` thay cho `NUXT_OIDC_MOCK=true`
+  
+  Không đổi API và runtime. Layer đăng nhập qua IAM, cờ bỏ qua đăng nhập là `runtimeConfig.auth.mock` (`NUXT_AUTH_MOCK`),
+  khớp `.env.example`, `CLAUDE.md` của template và docs Auth. `NUXT_OIDC_MOCK` không bỏ qua đăng nhập (phần OIDC còn sót
+  đọc cờ này cũng đã gỡ khỏi layer), nên làm theo hướng dẫn cũ vẫn phải đăng nhập IAM thật.
+  
+  - Lời nhắc sau khi scaffold và mục "Bắt đầu" trong README template: cấu hình IAM/backend hoặc `NUXT_AUTH_MOCK=true`.
+  - README template: mục "Có sẵn từ layer" mô tả auth là đăng nhập IAM qua BFF thay vì OIDC.
+- c85195b: Sửa app scaffold bằng `create-antadmin-app` fail `pnpm install` và `pnpm typecheck` khi đặt ngoài monorepo (pnpm 12)
+  
+  Không đổi API và runtime. Lỗi có sẵn (tái hiện trên cả 1.3.1 và 2.0.0), làm script `check`, stage `check` của
+  `Dockerfile` và job check trong `.gitlab-ci.yml` của app mới fail ngay từ đầu. Monorepo không gặp vì có `allowBuilds` ở
+  `pnpm-workspace.yaml` gốc và `@types/node` được hoist từ package khác.
+  
+  - **`pnpm install` thoát lỗi `ERR_PNPM_IGNORED_BUILDS`** (`@antadmin/cli`): pnpm 11+ chặn build script của dependency và
+    fail khi còn package chưa được quyết định (`esbuild`, `core-js`). Template thêm `pnpm-workspace.yaml` khai báo
+    `allowBuilds` (`esbuild`, `@parcel/watcher` được chạy; `core-js` bị chặn), `Dockerfile` copy file này trước
+    `pnpm install --frozen-lockfile`. `package.json` pin `packageManager` cùng bản pnpm của core, để corepack trong Docker/CI
+    cài đúng bản thay vì bản mặc định của corepack.
+  - **`pnpm typecheck` báo TS2307 `node:crypto` và TS2591 `Buffer`** (`@antadmin/nuxt-layer-base`): app typecheck thẳng
+    source `server/utils/{session,iam,oidc}.ts` của layer nhưng không có type Node. Layer khai báo `@types/node` trong
+    `dependencies` và các file dùng API Node có `/// <reference types="node" />`, nên app không cần tự cài `@types/node`.
+    App tạo từ template cũ cũng hết lỗi sau khi nâng layer.
+  - App tạo từ template cũ vẫn fail `pnpm install` với pnpm 11+ cho tới khi chép `pnpm-workspace.yaml`, field
+    `packageManager` và dòng `COPY` trong `Dockerfile` từ template mới (sau đó chạy `pnpm install` để ghi bản pnpm vào
+    `pnpm-lock.yaml`).
+  - Test `S-REGR-05` (`pnpm test:release`) chặn tái phát: template thiếu `allowBuilds`/`packageManager`, `Dockerfile` không
+    copy `pnpm-workspace.yaml`, hoặc server util dùng API Node mà không tham chiếu type Node.
+- 387adbc: Template scaffold khai báo `engines.node` khớp yêu cầu của Nuxt 4.5 (`^22.19.0 || ^24.11.0 || >=26.0.0`)
+  
+  Không đổi API và runtime. Template cài `nuxt@^4.0.0` nên app mới nhận Nuxt 4.5, bản chỉ hỗ trợ Node 22.19+, 24.11+ và
+  26+. Giá trị cũ `>=20.19.0` ghi sai là chạy được trên Node 20, 23 và 25.
+  
+  - pnpm 12 không chặn cài đặt theo `engines.node` của chính project, nên đổi này không làm fail `pnpm install` hay Docker
+    build (`node:24-alpine`).
+  - App tạo từ template cũ nên sửa `engines.node` trong `package.json` theo cùng giá trị.
+
 ## 2.0.0
 
 ### Major Changes

@@ -1,5 +1,12 @@
 # @antadmin/composables
 
+## 2.0.1
+
+### Patch Changes
+
+- @antadmin/theme@2.0.1
+  - @antadmin/utils@2.0.1
+
 ## 2.0.0
 
 ### Minor Changes

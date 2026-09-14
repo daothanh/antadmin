@@ -1,6 +1,6 @@
 {
   "name": "@antadmin/cli",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "create-antadmin-app — scaffold project Nuxt mới theo chuẩn framework AntAdmin",
   "license": "MIT",
   "type": "module",
