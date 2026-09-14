@@ -125,7 +125,7 @@ async function main() {
   console.log(`\n✔ Đã tạo project AntAdmin tại ./${name}\n`)
   console.log('Các bước tiếp theo:')
   console.log(`  cd ${name}`)
-  console.log('  cp .env.example .env   # cấu hình OIDC/backend (hoặc NUXT_OIDC_MOCK=true)')
+  console.log('  cp .env.example .env   # cấu hình IAM/backend (hoặc NUXT_AUTH_MOCK=true)')
   console.log(`  ${installCmd}`)
   console.log(`  ${pm === 'npm' ? 'npm run dev' : `${pm} dev`}\n`)
 }
