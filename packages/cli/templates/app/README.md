@@ -4,7 +4,7 @@ Project Nuxt 4 dựng từ framework AntAdmin (`extends @antadmin/nuxt-layer-bas
 
 ## Bắt đầu
 ```bash
-cp .env.example .env   # cấu hình OIDC/backend, hoặc đặt NUXT_OIDC_MOCK=true để dev
+cp .env.example .env   # cấu hình IAM/backend, hoặc đặt NUXT_AUTH_MOCK=true để dev bỏ qua đăng nhập
 pnpm install
 pnpm dev
 ```
@@ -20,8 +20,8 @@ pnpm dev
 ## Có sẵn từ layer
 - Theme antdv + component `C*` (CButton, CTable, CForm...).
 - Composable auto-import: `useApi`, `useAuth`, `usePermission`, `useTable`.
-- Auth/SSO (OIDC qua BFF) + middleware `auth.global` / `permission.global`.
-- BFF: `/api/**` proxy backend, `/auth/**` OIDC.
+- Auth IAM (form đăng nhập qua BFF) + middleware `auth.global` / `permission.global`.
+- BFF: `/api/**` proxy backend, `/auth/**` đăng nhập/phiên với IAM.
 
 ## Trang mẫu
 - `app/pages/index.vue` — trang chủ công khai + đăng nhập/đăng xuất.
