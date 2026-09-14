@@ -1,7 +1,7 @@
 # Đóng góp — AntAdmin Framework Core
 
 ## Yêu cầu
-- Node >= 20.19, pnpm >= 11.
+- Node `^22.19.0 || ^24.11.0 || >=26.0.0` (theo Nuxt 4.5), pnpm >= 11.
 
 ## Access
 

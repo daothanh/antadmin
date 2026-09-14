@@ -5,7 +5,7 @@ Core team sở hữu monorepo này và publish công khai 9 package framework l�
 consume qua semver và `extends` Nuxt layer. `@antadmin/mcp` chỉ dùng nội bộ trong repo core.
 
 ## Yêu cầu
-- Node >= 20.19 (đang dùng 24)
+- Node `^22.19.0 || ^24.11.0 || >=26.0.0` theo yêu cầu của Nuxt 4.5 (đang dùng 24)
 - pnpm >= 11
 - Turborepo
 
