@@ -17,7 +17,6 @@ const DEV_SECRET = 'antadmin-dev-insecure-session-secret-change-me'
 export interface AntAdminSession {
   user: AuthUser
   accessToken?: string
-  refreshToken?: string
   expiresAt?: number
 }
 

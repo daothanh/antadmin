@@ -17,7 +17,7 @@ export default defineNuxtConfig({
 - **Nitro BFF**:
   - `/api/**` → proxy tới `apiProxyTarget`, gắn `Authorization` từ session (token httpOnly cookie).
   - `POST /auth/login` · `GET /auth/clients` · `POST /auth/otp/send` · `GET /auth/session` · `GET /auth/logout` — đổi credential lấy token ở IAM rồi seal vào cookie httpOnly; `NUXT_AUTH_MOCK=true` trả dữ liệu giả cho dev.
-- **runtimeConfig**: `session.secret`, `auth.*` (endpoint + mapping IAM), `apiProxyTarget`, `public.apiBaseURL`, `public.auth.*` (cấu hình form). `oidc.*` là phần OIDC còn sót, chỉ `/auth/logout` và nhánh refresh token của `/api/**` còn đọc.
+- **runtimeConfig**: `session.secret`, `auth.*` (endpoint + mapping IAM), `apiProxyTarget`, `public.apiBaseURL`, `public.auth.*` (cấu hình form).
 - **Dark mode**: `useThemeMode()` (`mode`/`isDark`/`toggle`/`setMode`) — lưu qua cookie, `app.vue` đổi antd algorithm + CSS vars theo runtime.
 
 ## Cấu hình (env)

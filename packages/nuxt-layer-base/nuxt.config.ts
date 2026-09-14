@@ -75,21 +75,6 @@ export default defineNuxtConfig({
     session: {
       secret: '',
     },
-    // server-only — override qua env NUXT_OIDC_*. Phần OIDC còn sót từ trước khi chuyển sang
-    // đăng nhập IAM (block `auth` bên dưới): chỉ /auth/logout (chuyển tới end_session_endpoint
-    // của IdP khi có issuer) và nhánh refresh token của /api/** còn đọc. Session IAM không giữ
-    // refresh token nên nhánh refresh không chạy.
-    oidc: {
-      issuer: '',
-      clientId: '',
-      clientSecret: '',
-      redirectUri: '',
-      scopes: 'openid profile email',
-      postLogoutRedirectUri: '',
-      // Bỏ qua IdP khi logout/refresh token (NUXT_OIDC_MOCK=true). KHÔNG bỏ qua đăng nhập:
-      // dev không có IAM thì đặt NUXT_AUTH_MOCK=true.
-      mock: false,
-    },
     // ĐĂNG NHẬP BẰNG FORM (first-party). server-only — override qua NUXT_AUTH_*.
     // Endpoint/field mapping cấu hình theo dự án: đổi backend chỉ là đổi env,
     // route BFF (/auth/login, /auth/clients...) là hợp đồng cố định.

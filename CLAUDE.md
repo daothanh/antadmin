@@ -179,6 +179,5 @@ pnpm lint && pnpm typecheck && pnpm build && pnpm test
   rejection khi fetch lỗi.
 - `statusMessage` tiếng Việt khiến h3 cảnh báo và `toJSON()` làm mất dấu. Giữ nguyên tới khi quyết định đổi sang `message`;
   nếu đổi thì sửa luôn `AntAdminLoginForm.errorMessage()`.
-- Còn sót code OIDC (không có route `/auth/callback`). Template CLI dùng `(record as any)`. Docs và mock vẫn dùng permission
-  dạng `order.read`.
+- Template CLI dùng `(record as any)`. Docs và mock vẫn dùng permission dạng `order.read`.
 - GitHub chưa có workflow chạy trên PR; quality gate theo nhánh đang nằm ở `.gitlab-ci.yml`.

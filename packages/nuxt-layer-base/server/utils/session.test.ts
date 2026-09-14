@@ -12,7 +12,6 @@ const session: AntAdminSession = {
     permissions: ['order.read'],
   },
   accessToken: 'access-abc',
-  refreshToken: 'refresh-xyz',
   expiresAt: 1_700_000_000_000,
 }
 
